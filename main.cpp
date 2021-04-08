@@ -6,15 +6,13 @@
 #include "interpreter.h"
 
 int main() {
-    std::string src = "var x = 1;"
-                      "x = 5 + 1 * 2;"
-                      "x;";
+    std::string src = "print(\"hello world\");";
 
     mango::Lexer lexer;
 
     auto tokens = lexer.get_tokens(src);
 
-    for(auto t : tokens) {
+    for (auto t : tokens) {
         std::cout << t << "\n";
     }
 
@@ -25,7 +23,8 @@ int main() {
     std::cout << ast_to_string(ast);
 
     mango::Interpreter interpreter;
-    interpreter.run(ast);
+    auto out = interpreter.run(ast);
+    std::cout << out << "\n";
 
     return 0;
 }

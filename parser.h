@@ -29,11 +29,17 @@ class Parser {
 
     Token expect(TokenType type);
 
+    Statement *get_block_statement();
+
     Statement *get_declaration_statement();
 
     Statement *get_assignment_statement();
 
+    Statement *get_return_statement();
+
     Expression *get_expression();
+
+    Statement *get_statement();
 
     std::vector<Statement *> get_statements();
 

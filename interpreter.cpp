@@ -1,125 +1,188 @@
 #include "interpreter.h"
 
-namespace mango
-{
+namespace mango {
 
-std::ostream &operator<<(std::ostream &os, const Value &v)
-{
-    switch (v.type)
-    {
-    case DataType::Integer:
-        os << v.value_int;
-        return os;
+std::ostream &operator<<(std::ostream &os, const Value &v) {
+    switch (v.type) {
+        case DataType::Undefined:
+            os << "undefined";
+            return os;
+        case DataType::Integer:
+            os << v.value_int;
+            return os;
+        case DataType::String:
+            os << "\"" << v.value_string << "\"";
+            return os;
+        case DataType::Function:
+            os << "function";
+            return os;
     }
 
-    os << "unknown";
-    return os;
+    std::cerr << "\nunknown value to convert to string\n";
+    assert(false);
 }
 
-Value Interpreter::execute_binary_expression(BinaryExpression *e)
-{
+Value Interpreter::execute_binary_expression(BinaryExpression *e) {
     auto l = execute_expression(e->left);
     auto r = execute_expression(e->right);
 
     // TODO: handle non integer types
     // TODO: operator precedence
 
-    switch (e->op)
-    {
-    case Operator::Plus:
-        return Value{DataType::Integer, l.value_int + r.value_int};
-    case Operator::Minus:
-        return Value{DataType::Integer, l.value_int - r.value_int};
-    case Operator::Multiply:
-        return Value{DataType::Integer, l.value_int * r.value_int};
-    case Operator::Divide:
-        return Value{DataType::Integer, l.value_int / r.value_int};
+    switch (e->op) {
+        case Operator::Plus:
+            return Value{DataType::Integer, l.value_int + r.value_int};
+        case Operator::Minus:
+            return Value{DataType::Integer, l.value_int - r.value_int};
+        case Operator::Multiply:
+            return Value{DataType::Integer, l.value_int * r.value_int};
+        case Operator::Divide:
+            return Value{DataType::Integer, l.value_int / r.value_int};
     }
 
-    std::cerr << "unhandled operator" << (int)e->op << "\n";
+    std::cerr << "unhandled operator" << (int) e->op << "\n";
     assert(false);
 }
 
-Value Interpreter::execute_identifier_expression(IdentifierExpression *e)
-{
-    return vars[e->value];
+Value Interpreter::execute_identifier_expression(IdentifierExpression *e) {
+    return call_stack.lookup_variable(e->value);
 }
 
-Value Interpreter::execute_integer_literal_expression(IntegerLiteralExpression *e)
-{
+Value Interpreter::execute_integer_literal_expression(IntegerLiteralExpression *e) {
     return Value{DataType::Integer, e->value};
 }
 
-Value Interpreter::execute_expression(Expression *expression)
-{
-    std::cout << "execute_expression\n";
-    if (auto e = dynamic_cast<IdentifierExpression *>(expression))
-    {
-        auto value = execute_identifier_expression(e);
-        std::cout << "IdentifierExpression => " << value << "\n";
-        return value;
+Value Interpreter::execute_string_literal_expression(StringLiteralExpression *e) {
+    Value v;
+    v.type = DataType::String;
+    v.value_string = e->value;
+    return v;
+}
+
+Value Interpreter::execute_function_expression(FunctionExpression *e) {
+    Value v;
+    v.type = DataType::Function;
+    v.value_function = Function{e->parameters, e->body};
+    return v;
+}
+
+Value Interpreter::execute_function_call_expression(FunctionCallExpression *e) {
+    auto fn = call_stack.lookup_variable(e->value);
+    if (fn.type == DataType::Undefined) {
+        std::cerr << "reference error: no definition found for identifier \"" << e->value << "\"\n";
+        assert(false);
     }
-    else if (auto e = dynamic_cast<BinaryExpression *>(expression))
-    {
-        auto value = execute_binary_expression(e);
-        std::cout << "BinaryExpression => " << value << "\n";
-        return value;
+
+    if (fn.value_function.is_builtin) {
+        std::vector<Value> args;
+
+        for (int i = 0; i < e->arguments.size(); i++) {
+            args.push_back(execute_expression(e->arguments[i]));
+        }
+
+        return fn.value_function.builtin_fn(args);
+    } else {
+        call_stack.new_frame();
+
+        for (int i = 0; i < e->arguments.size(); i++) {
+
+
+            auto name = fn.value_function.parameters[i];
+            call_stack.set_variable(name, execute_expression(e->arguments[i]));
+        }
+
+        auto return_value = execute_statement(fn.value_function.body);
+
+        call_stack.pop_frame();
+
+        return return_value;
     }
-    else if (auto e = dynamic_cast<IntegerLiteralExpression *>(expression))
-    {
-        auto value = execute_integer_literal_expression(e);
-        std::cout << "BinaryExpression => " << value << "\n";
-        return value;
-    }
-    else
-    {
-        std::cout << "unknown expression type" << typeid(expression).name() << "\n";
+}
+
+Value Interpreter::execute_expression(Expression *expression) {
+    if (auto e = dynamic_cast<IdentifierExpression *>(expression)) {
+        return execute_identifier_expression(e);
+    } else if (auto e = dynamic_cast<BinaryExpression *>(expression)) {
+        return execute_binary_expression(e);
+    } else if (auto e = dynamic_cast<IntegerLiteralExpression *>(expression)) {
+        return execute_integer_literal_expression(e);
+    } else if (auto e = dynamic_cast<StringLiteralExpression *>(expression)) {
+        return execute_string_literal_expression(e);
+    } else if (auto e = dynamic_cast<FunctionExpression *>(expression)) {
+        return execute_function_expression(e);
+    } else if (auto e = dynamic_cast<FunctionCallExpression *>(expression)) {
+        return execute_function_call_expression(e);
+    } else {
+        std::cerr << "unknown expression type\n";
         assert(false);
     }
 }
 
-void Interpreter::execute_declaration_statement(DeclarationStatement *s)
-{
-    vars[s->identifier] = execute_expression(s->value);
+Value Interpreter::execute_declaration_statement(DeclarationStatement *s) {
+    return call_stack.set_variable(s->identifier, execute_expression(s->value));
 }
 
-void Interpreter::execute_assignment_statement(AssignmentStatement *s)
-{
-    vars[s->identifier] = execute_expression(s->value);
+Value Interpreter::execute_assignment_statement(AssignmentStatement *s) {
+    return call_stack.set_variable(s->identifier, execute_expression(s->value));
 }
 
-void Interpreter::execute_expression_statement(ExpressionStatement *s)
-{
-    execute_expression(s->value);
+Value Interpreter::execute_expression_statement(ExpressionStatement *s) {
+    return execute_expression(s->value);
 }
 
-void Interpreter::execute_statement(Statement *statement)
-{
-    if (auto s = dynamic_cast<DeclarationStatement *>(statement))
-    {
-        execute_declaration_statement(s);
+Value Interpreter::execute_block_statement(BlockStatement *bs) {
+    Value v;
+
+    for (auto s: bs->statements) {
+        v = execute_statement(s);
     }
-    else if (auto s = dynamic_cast<ExpressionStatement *>(statement))
-    {
-        execute_expression_statement(s);
-    }
-    else if (auto s = dynamic_cast<AssignmentStatement *>(statement))
-    {
-        execute_assignment_statement(s);
-    }
-    else
-    {
+
+    return v;
+}
+
+Value Interpreter::execute_return_statement(ReturnStatement *s) {
+    return execute_expression(s->value);
+}
+
+Value Interpreter::execute_statement(Statement *statement) {
+    if (auto s = dynamic_cast<DeclarationStatement *>(statement)) {
+        return execute_declaration_statement(s);
+    } else if (auto s = dynamic_cast<ExpressionStatement *>(statement)) {
+        return execute_expression_statement(s);
+    } else if (auto s = dynamic_cast<AssignmentStatement *>(statement)) {
+        return execute_assignment_statement(s);
+    } else if (auto s = dynamic_cast<BlockStatement *>(statement)) {
+        return execute_block_statement(s);
+    } else if (auto s = dynamic_cast<ReturnStatement *>(statement)) {
+        return execute_return_statement(s);
+    } else {
         std::cerr << "unknown statement type\n";
         assert(false);
     }
 }
 
-void Interpreter::run(Program ast)
-{
-    for (auto s : ast.statements)
-    {
-        execute_statement(s);
+Interpreter::Interpreter() {
+    // TODO: builtin function setup needs to be generalised
+    Value print;
+    print.type = DataType::Function;
+    print.value_function.is_builtin = true;
+    auto fn = [&](std::vector<Value> args) -> Value {
+        std::cout << args[0] << "\n";
+        return Value{};
+    };
+    print.value_function.builtin_fn = fn;
+
+    call_stack.set_variable("print", print);
+}
+
+Value Interpreter::run(Program ast) {
+    Value v;
+
+    for (auto s : ast.statements) {
+        v = execute_statement(s);
     }
+
+    return v;
 }
 
 }

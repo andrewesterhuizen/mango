@@ -10,11 +10,17 @@ enum class TokenType {
     Identifier,
     Equals,
     Number,
+    String,
     SemiColon,
+    Comma,
     Plus,
     Minus,
     Asterisk,
     Slash,
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
     EndOfFile
 };
 

@@ -9,9 +9,11 @@
 namespace mango {
 
 enum class DataType {
-    Integer = 1,
-    Float,
-    String
+    Undefined,
+    Integer,
+//    Float,
+    String,
+    Function
 };
 
 std::string data_type_to_string(const DataType dt);
@@ -28,6 +30,10 @@ enum class Operator {
 Operator get_operator(char c);
 
 std::string operator_to_string(Operator op);
+
+struct Statement {
+    virtual ~Statement() = default;
+};
 
 struct Expression {
     virtual ~Expression() = default;
@@ -48,14 +54,33 @@ struct IntegerLiteralExpression : public Expression {
     IntegerLiteralExpression(int v) : value(v) {}
 };
 
+struct StringLiteralExpression : public Expression {
+    std::string value;
+
+    StringLiteralExpression(std::string v) : value(v) {}
+};
+
+struct BlockStatement : public Statement {
+    std::vector<Statement *> statements;
+};
+
+struct FunctionExpression : public Expression {
+    DataType return_type;
+    std::vector<std::string> parameters;
+    Statement *body;
+};
+
+struct FunctionCallExpression : public Expression {
+    std::string value;
+    std::vector<Expression*> arguments;
+    FunctionCallExpression(std::string v) : value(v) {}
+};
+
+
 struct BinaryExpression : public Expression {
     Operator op;
     Expression *left;
     Expression *right;
-};
-
-struct Statement {
-    virtual ~Statement() = default;
 };
 
 struct DeclarationStatement : public Statement {
@@ -65,18 +90,21 @@ struct DeclarationStatement : public Statement {
 };
 
 struct AssignmentStatement : public Statement {
+    DataType type;
     std::string identifier;
     Expression *value;
-
 };
+
+struct ReturnStatement : public Statement {
+    Expression *value;
+};
+
 
 struct ExpressionStatement : public Statement {
     Expression *value;
 
     ExpressionStatement(Expression *e) : value(e) {};
-
 };
-
 
 class Program {
 public:
