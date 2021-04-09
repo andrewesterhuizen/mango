@@ -103,7 +103,6 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->append_line("");
         sb->append_line("]");
 
-
         sb->decrease_indent();
         sb->append_line("}");
     } else {
@@ -186,6 +185,26 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
 
         sb->append("value: ");
         expression_to_string(sb, s->value);
+        sb->append_line("");
+
+        sb->decrease_indent();
+
+        sb->append_line("}");
+    } else if (auto s = dynamic_cast<IfStatement *>(statement)) {
+        sb->append_line("IfStatement {");
+
+        sb->increase_indent();
+
+        sb->append("condition: ");
+        expression_to_string(sb, s->condition);
+        sb->append_line("");
+
+        sb->append("if_block: ");
+        statement_to_string(sb, s->if_block);
+        sb->append_line("");
+
+        sb->append("else_block: ");
+        statement_to_string(sb, s->if_block);
         sb->append_line("");
 
         sb->decrease_indent();

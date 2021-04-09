@@ -22,6 +22,22 @@ std::ostream &operator<<(std::ostream &os, const Value &v) {
     assert(false);
 }
 
+bool value_is_truthy(Value v) {
+    switch (v.type) {
+        case DataType::Undefined:
+            return false;
+        case DataType::Integer:
+            return v.value_int != 0;
+        case DataType::String:
+            return true;
+        case DataType::Function:
+            return true;
+    }
+
+    std::cerr << "\nunknown value to check truthyness\n";
+    assert(false);
+}
+
 Value Interpreter::execute_binary_expression(BinaryExpression *e) {
     auto l = execute_expression(e->left);
     auto r = execute_expression(e->right);
@@ -144,6 +160,17 @@ Value Interpreter::execute_return_statement(ReturnStatement *s) {
     return execute_expression(s->value);
 }
 
+Value Interpreter::execute_if_statement(IfStatement *s) {
+    auto condition_value = execute_expression(s->condition);
+    if (value_is_truthy(condition_value)) {
+        execute_statement(s->if_block);
+    } else if(s->else_block != nullptr) {
+        execute_statement(s->else_block);
+    }
+
+    return Value{};
+}
+
 Value Interpreter::execute_statement(Statement *statement) {
     if (auto s = dynamic_cast<DeclarationStatement *>(statement)) {
         return execute_declaration_statement(s);
@@ -155,6 +182,8 @@ Value Interpreter::execute_statement(Statement *statement) {
         return execute_block_statement(s);
     } else if (auto s = dynamic_cast<ReturnStatement *>(statement)) {
         return execute_return_statement(s);
+    } else if (auto s = dynamic_cast<IfStatement *>(statement)) {
+        return execute_if_statement(s);
     } else {
         std::cerr << "unknown statement type\n";
         assert(false);

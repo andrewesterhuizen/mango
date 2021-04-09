@@ -6,7 +6,7 @@
 #include "interpreter.h"
 
 int main() {
-    std::string src = "print(\"hello world\");";
+    std::string src = "if(0+1){ print(\"true\"); } else { print(\"false\") }";
 
     mango::Lexer lexer;
 

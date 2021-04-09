@@ -72,7 +72,8 @@ struct FunctionExpression : public Expression {
 
 struct FunctionCallExpression : public Expression {
     std::string value;
-    std::vector<Expression*> arguments;
+    std::vector<Expression *> arguments;
+
     FunctionCallExpression(std::string v) : value(v) {}
 };
 
@@ -99,6 +100,11 @@ struct ReturnStatement : public Statement {
     Expression *value;
 };
 
+struct IfStatement : public Statement {
+    Expression *condition;
+    Statement *if_block;
+    Statement *else_block;
+};
 
 struct ExpressionStatement : public Statement {
     Expression *value;

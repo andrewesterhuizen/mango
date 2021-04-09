@@ -65,6 +65,26 @@ Statement *Parser::get_return_statement() {
     return s;
 }
 
+Statement *Parser::get_if_statement() {
+    auto s = new IfStatement;
+
+    expect(TokenType::LeftParen);
+    next_token();
+    s->condition = get_expression();
+    expect(TokenType::RightParen);
+    next_token();
+
+    s->if_block = get_statement();
+
+    auto next = next_token();
+    if(next.type == TokenType::Keyword && next.value == "else") {
+        next_token();
+        s->else_block = get_statement();
+    }
+
+    return s;
+}
+
 Statement *Parser::get_assignment_statement() {
     auto s = new AssignmentStatement;
     s->type = DataType::Integer;
@@ -100,7 +120,6 @@ Statement *Parser::get_block_statement() {
 
 Expression *Parser::get_expression() {
     auto t = current_token();
-
 
     Expression *left = nullptr;
 
@@ -192,6 +211,10 @@ Statement *Parser::get_statement() {
 
             if (t.value == "return") {
                 return get_return_statement();
+            }
+
+            if (t.value == "if") {
+                return get_if_statement();
             }
 
             UNEXPECTED_TOKEN(t);

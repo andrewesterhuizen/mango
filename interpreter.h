@@ -92,10 +92,13 @@ class Interpreter {
 
     Value execute_return_statement(ReturnStatement *s);
 
+    Value execute_if_statement(IfStatement *s);
+
     Value execute_statement(Statement *statement);
 
 public:
     Interpreter();
+
     Value run(Program ast);
 };
 
