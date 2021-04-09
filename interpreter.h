@@ -94,6 +94,8 @@ class Interpreter {
 
     Value execute_if_statement(IfStatement *s);
 
+    Value execute_while_statement(WhileStatement *s);
+
     Value execute_statement(Statement *statement);
 
 public:

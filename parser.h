@@ -39,6 +39,8 @@ class Parser {
 
     Statement *get_if_statement();
 
+    Statement *get_while_statement();
+
     Expression *get_expression();
 
     Statement *get_statement();

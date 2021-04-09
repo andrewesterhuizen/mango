@@ -85,6 +85,20 @@ Statement *Parser::get_if_statement() {
     return s;
 }
 
+Statement *Parser::get_while_statement() {
+    auto s = new WhileStatement;
+
+    expect(TokenType::LeftParen);
+    next_token();
+    s->condition = get_expression();
+    expect(TokenType::RightParen);
+    next_token();
+
+    s->body = get_statement();
+
+    return s;
+}
+
 Statement *Parser::get_assignment_statement() {
     auto s = new AssignmentStatement;
     s->type = DataType::Integer;
@@ -215,6 +229,10 @@ Statement *Parser::get_statement() {
 
             if (t.value == "if") {
                 return get_if_statement();
+            }
+
+            if (t.value == "while") {
+                return get_while_statement();
             }
 
             UNEXPECTED_TOKEN(t);

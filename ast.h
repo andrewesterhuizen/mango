@@ -106,6 +106,11 @@ struct IfStatement : public Statement {
     Statement *else_block;
 };
 
+struct WhileStatement : public Statement {
+    Expression *condition;
+    Statement *body;
+};
+
 struct ExpressionStatement : public Statement {
     Expression *value;
 

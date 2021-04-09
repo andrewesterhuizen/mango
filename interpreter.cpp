@@ -164,8 +164,16 @@ Value Interpreter::execute_if_statement(IfStatement *s) {
     auto condition_value = execute_expression(s->condition);
     if (value_is_truthy(condition_value)) {
         execute_statement(s->if_block);
-    } else if(s->else_block != nullptr) {
+    } else if (s->else_block != nullptr) {
         execute_statement(s->else_block);
+    }
+
+    return Value{};
+}
+
+Value Interpreter::execute_while_statement(WhileStatement *s) {
+    while (value_is_truthy(execute_expression(s->condition))) {
+        execute_statement(s->body);
     }
 
     return Value{};
@@ -184,6 +192,8 @@ Value Interpreter::execute_statement(Statement *statement) {
         return execute_return_statement(s);
     } else if (auto s = dynamic_cast<IfStatement *>(statement)) {
         return execute_if_statement(s);
+    } else if (auto s = dynamic_cast<WhileStatement *>(statement)) {
+        return execute_while_statement(s);
     } else {
         std::cerr << "unknown statement type\n";
         assert(false);

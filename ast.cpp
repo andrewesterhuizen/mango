@@ -210,6 +210,22 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
         sb->decrease_indent();
 
         sb->append_line("}");
+    } else if (auto s = dynamic_cast<WhileStatement *>(statement)) {
+        sb->append_line("WhileStatement {");
+
+        sb->increase_indent();
+
+        sb->append("condition: ");
+        expression_to_string(sb, s->condition);
+        sb->append_line("");
+
+        sb->append("body: ");
+        statement_to_string(sb, s->body);
+        sb->append_line("");
+
+        sb->decrease_indent();
+
+        sb->append_line("}");
     } else {
         assert(false);
     }
