@@ -4,8 +4,42 @@
 #include <unordered_map>
 #include <vector>
 #include <functional>
+#include <variant>
 
 #include "ast.h"
+
+template<class... Ts>
+struct overload : Ts ... {
+    using Ts::operator()...;
+};
+template<class... Ts> overload(Ts...) -> overload<Ts...>;
+
+// this solution sucks and won't scale well to other types
+#define INTEGER_OPERATIONS_VISITOR(OPERATOR) \
+overload{ \
+    [](int l, int r) -> Value { return Value{DataType::Integer, l OPERATOR r}; }, \
+    [](auto, auto) -> Value { return Value{DataType::Undefined}; }, \
+}
+
+#define INTEGER_LOGICAL_OPERATIONS_VISITOR(OPERATOR) \
+overload{ \
+    [](int l, int r) -> Value { return Value{DataType::Bool, l OPERATOR r}; }, \
+    [](auto, auto) -> Value { return Value{DataType::Undefined}; }, \
+}
+
+#define INTEGER_AND_STRING_OPERATIONS_VISITOR(OPERATOR) \
+overload{ \
+    [](int l, int r) -> Value { return Value{DataType::Integer, l OPERATOR r}; }, \
+    [](std::string &l, std::string &r) -> Value { return Value{DataType::String, l OPERATOR r}; }, \
+    [](auto, auto) -> Value { return Value{DataType::Undefined}; }, \
+}
+
+#define INTEGER_AND_STRING_LOGICAL_OPERATIONS_VISITOR(OPERATOR) \
+overload{ \
+    [](int l, int r) -> Value { return Value{DataType::Bool, l OPERATOR r}; }, \
+    [](std::string &l, std::string &r) -> Value { return Value{DataType::Bool, l OPERATOR r}; }, \
+    [](auto, auto) -> Value { return Value{DataType::Undefined}; }, \
+}
 
 namespace mango {
 
@@ -18,11 +52,11 @@ struct Function {
     std::function<Value(std::vector<Value>)> builtin_fn;
 };
 
+using ValueVariant = std::variant<int, std::string, bool, Function>;
+
 struct Value {
     DataType type = DataType::Undefined;
-    int value_int;
-    std::string value_string;
-    Function value_function;
+    ValueVariant value;
 };
 
 using Scope = std::unordered_map<std::string, Value>;

@@ -1,37 +1,37 @@
 #include "ast.h"
 
+#include <unordered_map>
+
 namespace mango {
 
-Operator get_operator(char c) {
-    switch (c) {
-        case '+':
-            return Operator::Plus;
-        case '-':
-            return Operator::Minus;
-        case '*':
-            return Operator::Multiply;
-        case '/':
-            return Operator::Divide;
+auto operator_string_lookup = std::unordered_map<Operator, std::string>{
+        {Operator::Plus,                 "+"},
+        {Operator::Minus,                "-"},
+        {Operator::Multiply,             "*"},
+        {Operator::Divide,               "/"},
+        {Operator::EqualTo,              "=="},
+        {Operator::NotEqualTo,           "!="},
+        {Operator::Not,                  "!"},
+        {Operator::LessThan,             "<"},
+        {Operator::LessThanOrEqualTo,    "<="},
+        {Operator::GreaterThan,          ">"},
+        {Operator::GreaterThanOrEqualTo, ">="},
+};
+
+std::string operator_to_string(Operator op) {
+    if (operator_string_lookup.find(op) != operator_string_lookup.end()) {
+        return operator_string_lookup[op];
     }
 
-    std::cout << "invalid operator \"" << c << "\"\n";
+    std::cerr << "no string defined for operator\n";
     assert(false);
 }
 
-std::string operator_to_string(Operator op) {
-    switch (op) {
-        case Operator::Plus:
-            return "+";
-        case Operator::Minus:
-            return "-";
-        case Operator::Multiply:
-            return "*";
-        case Operator::Divide:
-            return "/";
-    }
-
-    return "unknown";
+std::ostream &operator<<(std::ostream &os, const Operator &op) {
+    os << operator_to_string(op);
+    return os;
 }
+
 
 void expression_to_string(string_builder::StringBuilder *sb, Expression *expression) {
     if (auto e = dynamic_cast<IntegerLiteralExpression *>(expression)) {
@@ -253,21 +253,20 @@ std::string ast_to_string(Program ast) {
     return sb.get_string();
 }
 
+auto data_type_string_lookup = std::unordered_map<DataType, std::string>{
+        {DataType::Undefined, "undefined"},
+        {DataType::String,    "string"},
+        {DataType::Integer,   "integer"},
+        {DataType::Function,  "function"},
+};
+
 std::string data_type_to_string(const DataType dt) {
-    switch (dt) {
-        case DataType::Undefined:
-            return "undefined";
-        case DataType::String:
-            return "string";
-        case DataType::Integer:
-            return "int";
-//        case DataType::Float:
-//            return "float";
-        case DataType::Function:
-            return "function";
+    if (data_type_string_lookup.find(dt) != data_type_string_lookup.end()) {
+        return data_type_string_lookup[dt];
     }
 
-    return "unknown";
+    std::cerr << "no string defined for data type\n";
+    assert(false);
 }
 
 std::ostream &operator<<(std::ostream &os, const DataType &dt) {

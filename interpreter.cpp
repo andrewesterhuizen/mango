@@ -8,10 +8,13 @@ std::ostream &operator<<(std::ostream &os, const Value &v) {
             os << "undefined";
             return os;
         case DataType::Integer:
-            os << v.value_int;
+            os << std::get<int>(v.value);
             return os;
         case DataType::String:
-            os << "\"" << v.value_string << "\"";
+            os << "\"" << std::get<std::string>(v.value) << "\"";
+            return os;
+        case DataType::Bool:
+            os << (std::get<bool>(v.value) ? "true" : "false");
             return os;
         case DataType::Function:
             os << "function";
@@ -27,9 +30,11 @@ bool value_is_truthy(Value v) {
         case DataType::Undefined:
             return false;
         case DataType::Integer:
-            return v.value_int != 0;
+            return std::get<int>(v.value) != 0;
         case DataType::String:
             return true;
+        case DataType::Bool:
+            return std::get<bool>(v.value);
         case DataType::Function:
             return true;
     }
@@ -38,22 +43,55 @@ bool value_is_truthy(Value v) {
     assert(false);
 }
 
+auto add_visitor = INTEGER_AND_STRING_OPERATIONS_VISITOR(+);
+auto subtract_visitor = INTEGER_OPERATIONS_VISITOR(-);
+auto multiply_visitor = INTEGER_OPERATIONS_VISITOR(-);
+auto divide_visitor = INTEGER_OPERATIONS_VISITOR(/);
+auto equal_to_visitor = INTEGER_AND_STRING_LOGICAL_OPERATIONS_VISITOR(==);
+auto not_equal_to_visitor = INTEGER_AND_STRING_LOGICAL_OPERATIONS_VISITOR(!=);
+auto less_than_visitor = INTEGER_LOGICAL_OPERATIONS_VISITOR(<);
+auto less_than_or_equal_to_visitor = INTEGER_LOGICAL_OPERATIONS_VISITOR(<=);
+auto greater_than_visitor = INTEGER_LOGICAL_OPERATIONS_VISITOR(>);
+auto greater_than_or_equal_to_visitor = INTEGER_LOGICAL_OPERATIONS_VISITOR(>=);
+
+
 Value Interpreter::execute_binary_expression(BinaryExpression *e) {
     auto l = execute_expression(e->left);
     auto r = execute_expression(e->right);
 
-    // TODO: handle non integer types
     // TODO: operator precedence
+
+    // this is a simple solution for now but we can probably allow some
+    // automatic type converting for operations on values of different types
+    if (l.type != r.type) {
+        std::cerr << "operator " << e->op << " cannot be applied to types " << l.type << " and " << r.type << "\n";
+        assert(false);
+    }
 
     switch (e->op) {
         case Operator::Plus:
-            return Value{DataType::Integer, l.value_int + r.value_int};
+            return std::visit(add_visitor, l.value, r.value);
         case Operator::Minus:
-            return Value{DataType::Integer, l.value_int - r.value_int};
+            return std::visit(subtract_visitor, l.value, r.value);
         case Operator::Multiply:
-            return Value{DataType::Integer, l.value_int * r.value_int};
+            return std::visit(multiply_visitor, l.value, r.value);
         case Operator::Divide:
-            return Value{DataType::Integer, l.value_int / r.value_int};
+            return std::visit(divide_visitor, l.value, r.value);
+        case Operator::EqualTo:
+            return std::visit(equal_to_visitor, l.value, r.value);
+        case Operator::NotEqualTo:
+            return std::visit(not_equal_to_visitor, l.value, r.value);
+        case Operator::GreaterThan:
+            return std::visit(greater_than_visitor, l.value, r.value);
+        case Operator::GreaterThanOrEqualTo:
+            return std::visit(greater_than_or_equal_to_visitor, l.value, r.value);
+        case Operator::LessThan:
+            return std::visit(less_than_visitor, l.value, r.value);
+        case Operator::LessThanOrEqualTo:
+            return std::visit(less_than_or_equal_to_visitor, l.value, r.value);
+        case Operator::Not:
+            std::cerr << "operator \"!\" is not a binary operator\n";
+            assert(false);
     }
 
     std::cerr << "unhandled operator" << (int) e->op << "\n";
@@ -71,43 +109,45 @@ Value Interpreter::execute_integer_literal_expression(IntegerLiteralExpression *
 Value Interpreter::execute_string_literal_expression(StringLiteralExpression *e) {
     Value v;
     v.type = DataType::String;
-    v.value_string = e->value;
+    v.value = e->value;
     return v;
 }
 
 Value Interpreter::execute_function_expression(FunctionExpression *e) {
     Value v;
     v.type = DataType::Function;
-    v.value_function = Function{e->parameters, e->body};
+    v.value = Function{e->parameters, e->body};
     return v;
 }
 
 Value Interpreter::execute_function_call_expression(FunctionCallExpression *e) {
-    auto fn = call_stack.lookup_variable(e->value);
-    if (fn.type == DataType::Undefined) {
+    auto function_value = call_stack.lookup_variable(e->value);
+    if (function_value.type == DataType::Undefined) {
         std::cerr << "reference error: no definition found for identifier \"" << e->value << "\"\n";
         assert(false);
     }
 
-    if (fn.value_function.is_builtin) {
+    auto fn = std::get<Function>(function_value.value);
+
+    if (fn.is_builtin) {
         std::vector<Value> args;
 
         for (int i = 0; i < e->arguments.size(); i++) {
             args.push_back(execute_expression(e->arguments[i]));
         }
 
-        return fn.value_function.builtin_fn(args);
+        return fn.builtin_fn(args);
     } else {
         call_stack.new_frame();
 
         for (int i = 0; i < e->arguments.size(); i++) {
 
 
-            auto name = fn.value_function.parameters[i];
+            auto name = fn.parameters[i];
             call_stack.set_variable(name, execute_expression(e->arguments[i]));
         }
 
-        auto return_value = execute_statement(fn.value_function.body);
+        auto return_value = execute_statement(fn.body);
 
         call_stack.pop_frame();
 
@@ -204,12 +244,13 @@ Interpreter::Interpreter() {
     // TODO: builtin function setup needs to be generalised
     Value print;
     print.type = DataType::Function;
-    print.value_function.is_builtin = true;
-    auto fn = [&](std::vector<Value> args) -> Value {
+    Function fn;
+    fn.is_builtin = true;
+    fn.builtin_fn = [&](std::vector<Value> args) -> Value {
         std::cout << args[0] << "\n";
         return Value{};
     };
-    print.value_function.builtin_fn = fn;
+    print.value = fn;
 
     call_stack.set_variable("print", print);
 }

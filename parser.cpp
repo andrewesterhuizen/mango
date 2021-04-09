@@ -7,7 +7,14 @@ Token Parser::current_token() {
 }
 
 Token Parser::next_token() {
-    return tokens.at(++index);
+    index++;
+
+    // TODO: this is a hack to make things work for now, but it shouldn't be needed
+    if (index >= tokens.size()) {
+        return Token{TokenType::EndOfFile, ""};
+    }
+
+    return tokens.at(index);
 }
 
 Token Parser::peek_next_token() {
@@ -25,6 +32,50 @@ Token Parser::expect(TokenType type) {
         assert(false);
     }
     return t;
+}
+
+Operator Parser::get_operator() {
+    auto t = current_token();
+    auto next = peek_next_token();
+
+    switch (t.type) {
+        case TokenType::Plus:
+            return Operator::Plus;
+        case TokenType::Minus:
+            return Operator::Minus;
+        case TokenType::Asterisk:
+            return Operator::Multiply;
+        case TokenType::Slash:
+            return Operator::Divide;
+        case TokenType::Equals:
+            if (next.type != TokenType::Equals) {
+                break;
+            }
+            next_token();
+            return Operator::EqualTo;
+        case TokenType::Exclamation:
+            if (next.type == TokenType::Equals) {
+                next_token();
+                return Operator::NotEqualTo;
+            }
+
+            return Operator::Not;
+        case TokenType::LeftAngleBracket:
+            if (next.type == TokenType::Equals) {
+                next_token();
+                return Operator::LessThanOrEqualTo;
+            }
+            return Operator::LessThan;
+        case TokenType::RightAngleBracket:
+            if (next.type == TokenType::Equals) {
+                next_token();
+                return Operator::GreaterThanOrEqualTo;
+            }
+            return Operator::GreaterThan;
+    }
+
+    std::cout << "invalid operator \"" << t.value << "\"\n";
+    assert(false);
 }
 
 Statement *Parser::get_declaration_statement() {
@@ -75,9 +126,10 @@ Statement *Parser::get_if_statement() {
     next_token();
 
     s->if_block = get_statement();
+    s->else_block = nullptr;
 
     auto next = next_token();
-    if(next.type == TokenType::Keyword && next.value == "else") {
+    if (next.type == TokenType::Keyword && next.value == "else") {
         next_token();
         s->else_block = get_statement();
     }
@@ -202,7 +254,7 @@ Expression *Parser::get_expression() {
         return left;
     }
 
-    auto op = get_operator(next.value.data()[0]);
+    auto op = get_operator();
     next_token();
     auto right = get_expression();
 

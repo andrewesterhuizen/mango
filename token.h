@@ -13,6 +13,7 @@ enum class TokenType {
     String,
     SemiColon,
     Comma,
+    Exclamation,
     Plus,
     Minus,
     Asterisk,
@@ -21,6 +22,8 @@ enum class TokenType {
     RightParen,
     LeftBrace,
     RightBrace,
+    LeftAngleBracket,
+    RightAngleBracket,
     EndOfFile
 };
 

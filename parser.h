@@ -29,6 +29,8 @@ class Parser {
 
     Token expect(TokenType type);
 
+    Operator get_operator();
+
     Statement *get_block_statement();
 
     Statement *get_declaration_statement();

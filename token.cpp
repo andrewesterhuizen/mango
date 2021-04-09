@@ -20,6 +20,8 @@ std::string token_type_to_string(TokenType t) {
             return "SemiColon";
         case TokenType::Comma:
             return "Comma";
+        case TokenType::Exclamation:
+            return "Exclamation";
         case TokenType::LeftParen:
             return "LeftParen";
         case TokenType::RightParen:
@@ -28,6 +30,10 @@ std::string token_type_to_string(TokenType t) {
             return "LeftBrace";
         case TokenType::RightBrace:
             return "RightBrace";
+        case TokenType::LeftAngleBracket:
+            return "LeftAngleBracket";
+        case TokenType::RightAngleBracket:
+            return "RightAngleBracket";
         case TokenType::Plus:
             return "Plus";
         case TokenType::Minus:

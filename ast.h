@@ -13,6 +13,7 @@ enum class DataType {
     Integer,
 //    Float,
     String,
+    Bool,
     Function
 };
 
@@ -24,10 +25,17 @@ enum class Operator {
     Plus = 1,
     Minus,
     Multiply,
-    Divide
+    Divide,
+    LessThan,
+    LessThanOrEqualTo,
+    GreaterThan,
+    GreaterThanOrEqualTo,
+    EqualTo,
+    NotEqualTo,
+    Not
 };
 
-Operator get_operator(char c);
+std::ostream &operator<<(std::ostream &os, const Operator &op);
 
 std::string operator_to_string(Operator op);
 
