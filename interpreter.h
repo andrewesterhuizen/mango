@@ -56,7 +56,11 @@ struct Object {
     std::unordered_map<std::string, Value> properties;
 };
 
-using ValueVariant = std::variant<int, std::string, bool, Function, Object>;
+struct Array {
+    std::vector<Value> elements;
+};
+
+using ValueVariant = std::variant<int, std::string, bool, Function, Object, Array>;
 
 struct Value {
     DataType type = DataType::Undefined;
@@ -115,6 +119,8 @@ class Interpreter {
     Value execute_string_literal_expression(StringLiteralExpression *e);
 
     Value execute_object_expression(ObjectExpression *e);
+
+    Value execute_array_expression(ArrayExpression *e);
 
     Value execute_function_expression(FunctionExpression *e);
 

@@ -14,7 +14,19 @@ std::string value_to_string(const Value &v) {
             return (std::get<bool>(v.value) ? "true" : "false");
         case DataType::Function:
             return "function";
-        case DataType::Object:
+        case DataType::Array: {
+            std::string out = "[";
+
+            auto obj = std::get<Array>(v.value);
+
+            for (auto el : obj.elements) {
+                out += value_to_string(el) + ", ";
+            }
+
+            out += "]";
+            return out;
+        }
+        case DataType::Object: {
             std::string out = "{\n";
 
             auto obj = std::get<Object>(v.value);
@@ -25,6 +37,7 @@ std::string value_to_string(const Value &v) {
 
             out += "}";
             return out;
+        }
     }
 
     std::cerr << "\nunknown value to convert to string\n";
@@ -42,13 +55,12 @@ bool value_is_truthy(Value v) {
             return false;
         case DataType::Integer:
             return std::get<int>(v.value) != 0;
-        case DataType::String:
-            return true;
         case DataType::Bool:
             return std::get<bool>(v.value);
+        case DataType::String:
         case DataType::Function:
-            return true;
         case DataType::Object:
+        case DataType::Array:
             return true;
     }
 
@@ -153,6 +165,25 @@ Value Interpreter::execute_member_expression(MemberExpression *e) {
         return v->second;
     }
 
+    if (variable.type == DataType::Array) {
+        auto array = std::get<Array>(variable.value);
+        auto property = execute_expression(e->property);
+
+        // TODO: handle built in properties like .size for arrays
+        if (property.type != DataType::Integer) {
+            std::cerr << "unsupported data type for property lookup\n";
+            assert(false);
+        }
+
+        // element lookup
+        auto index = std::get<int>(property.value);
+        if (index >= array.elements.size()) {
+            return Value{DataType::Undefined};
+        }
+
+        return array.elements.at(index);
+    }
+
     std::cerr << "unsupported data type for property lookup\n";
     assert(false);
 }
@@ -203,6 +234,20 @@ Value Interpreter::execute_object_expression(ObjectExpression *e) {
     }
 
     v.value = obj;
+
+    return v;
+}
+
+Value Interpreter::execute_array_expression(ArrayExpression *e) {
+    Value v;
+    v.type = DataType::Array;
+    auto array = Array{};
+
+    for (auto el : e->elements) {
+        array.elements.push_back(execute_expression(el));
+    }
+
+    v.value = array;
 
     return v;
 }
@@ -263,6 +308,8 @@ Value Interpreter::execute_expression(Expression *expression) {
         return execute_function_call_expression(e);
     } else if (auto e = dynamic_cast<ObjectExpression *>(expression)) {
         return execute_object_expression(e);
+    } else if (auto e = dynamic_cast<ArrayExpression *>(expression)) {
+        return execute_array_expression(e);
     } else if (auto e = dynamic_cast<MemberExpression *>(expression)) {
         return execute_member_expression(e);
     } else if (auto e = dynamic_cast<AssignmentExpression *>(expression)) {

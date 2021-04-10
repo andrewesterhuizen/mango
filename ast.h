@@ -17,6 +17,7 @@ enum class DataType {
     Bool,
     Function,
     Object,
+    Array
 };
 
 std::string data_type_to_string(const DataType dt);
@@ -78,9 +79,13 @@ struct ObjectExpression : public Expression {
     std::unordered_map<std::string, Expression *> properties;
 };
 
+struct ArrayExpression : public Expression {
+    std::vector<Expression *> elements;
+};
+
 struct MemberExpression : public Expression {
     std::string identifier;
-    Expression* property;
+    Expression *property;
 };
 
 

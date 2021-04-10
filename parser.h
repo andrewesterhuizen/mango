@@ -47,6 +47,8 @@ class Parser {
 
     Expression *get_object_expression();
 
+    Expression *get_array_expression();
+
     Expression *get_function_expression();
 
     Expression *get_function_call_expression();

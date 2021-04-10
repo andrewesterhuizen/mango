@@ -46,7 +46,7 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->append_no_indent("IdentifierExpression { value: ");
         sb->append_no_indent(e->value);
         sb->append_no_indent(" }");
-    }  else if (auto e = dynamic_cast<MemberExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<MemberExpression *>(expression)) {
         sb->append_line_no_indent("MemberExpression {");
         sb->increase_indent();
         sb->append("object: ");
@@ -74,7 +74,7 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->decrease_indent();
 
         sb->append("}");
-    }  else if (auto e = dynamic_cast<AssignmentExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<AssignmentExpression *>(expression)) {
         sb->append_line_no_indent("AssignmentExpression {");
 
         sb->increase_indent();
@@ -132,6 +132,22 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->append_line("}");
     } else if (auto e = dynamic_cast<ObjectExpression *>(expression)) {
         sb->append_line_no_indent("ObjectExpression {");
+        sb->append_line("}");
+    } else if (auto e = dynamic_cast<ArrayExpression *>(expression)) {
+        sb->append_line_no_indent("ArrayExpression {");
+
+        sb->append_line("elements: [");
+        sb->increase_indent();
+        for (auto a : e->elements) {
+            sb->append("");
+            expression_to_string(sb, a);
+            sb->append_line("");
+        }
+        sb->decrease_indent();
+        sb->append_line("");
+        sb->append_line("]");
+
+        sb->decrease_indent();
         sb->append_line("}");
     } else {
         std::cerr << "unknown expression\n";

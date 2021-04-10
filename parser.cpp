@@ -296,6 +296,27 @@ Expression *Parser::get_object_expression() {
     return oe;
 };
 
+Expression *Parser::get_array_expression() {
+    std::cout << "get_array_expression\n";
+
+    expect(TokenType::LeftBracket);
+
+    std::vector<Expression *> elements;
+
+    while (peek_next_token().type != TokenType::RightBracket) {
+        elements.push_back(get_expression());
+        if (peek_next_token().type == TokenType::Comma) {
+            next_token();
+        }
+    };
+
+    expect(TokenType::RightBracket);
+
+    auto e = new ArrayExpression();
+    e->elements = elements;
+    return e;
+};
+
 Expression *Parser::get_member_expression() {
     std::cout << "get_member_expression\n";
 
@@ -364,6 +385,10 @@ Expression *Parser::get_expression() {
         case TokenType::LeftBrace: {
             backup();
             return get_object_expression();
+        }
+        case TokenType::LeftBracket: {
+            backup();
+            return get_array_expression();
         }
         case TokenType::Number: {
             auto ile = new IntegerLiteralExpression;
