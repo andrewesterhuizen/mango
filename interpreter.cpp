@@ -2,38 +2,38 @@
 
 namespace mango {
 
-std::ostream &operator<<(std::ostream &os, const Value &v) {
+std::string value_to_string(const Value &v) {
     switch (v.type) {
         case DataType::Undefined:
-            os << "undefined";
-            return os;
+            return "undefined";
         case DataType::Integer:
-            os << std::get<int>(v.value);
-            return os;
+            return std::to_string(std::get<int>(v.value));
         case DataType::String:
-            os << "\"" << std::get<std::string>(v.value) << "\"";
-            return os;
+            return "\"" + std::get<std::string>(v.value) + "\"";
         case DataType::Bool:
-            os << (std::get<bool>(v.value) ? "true" : "false");
-            return os;
+            return (std::get<bool>(v.value) ? "true" : "false");
         case DataType::Function:
-            os << "function";
-            return os;
+            return "function";
         case DataType::Object:
-            os << "{\n";
+            std::string out = "{\n";
 
             auto obj = std::get<Object>(v.value);
 
             for (auto prop : obj.properties) {
-                os << "  " << prop.first << ": " << prop.second << ",\n";
+                out += "  " + prop.first + ": " + value_to_string(prop.second) + ",\n";
             }
 
-            os << "}";
-            return os;
+            out += "}";
+            return out;
     }
 
     std::cerr << "\nunknown value to convert to string\n";
     assert(false);
+}
+
+std::ostream &operator<<(std::ostream &os, const Value &v) {
+    os << value_to_string(v);
+    return os;
 }
 
 bool value_is_truthy(Value v) {
@@ -127,19 +127,34 @@ Value Interpreter::execute_string_literal_expression(StringLiteralExpression *e)
 }
 
 Value Interpreter::execute_member_expression(MemberExpression *e) {
-    auto variable = call_stack.lookup_variable(e->object);
+    auto variable = call_stack.lookup_variable(e->identifier);
     if (variable.type == DataType::Undefined) {
-        std::cerr << "reference error: no definition found for identifier \"" << e->object << "\"\n";
+        std::cerr << "reference error: no definition found for identifier \"" << e->identifier << "\"\n";
         assert(false);
     }
 
-    auto obj = std::get<Object>(variable.value);
-    auto v = obj.properties.find(e->property);
-    if (v == obj.properties.end()) {
-        return Value{DataType::Undefined};
+    // lookup on object
+    if (variable.type == DataType::Object) {
+        auto property = execute_expression(e->property);
+
+        std::string property_string;
+        if (property.type == DataType::String) {
+            property_string = std::get<std::string>(property.value);
+        } else {
+            property_string = value_to_string(property);
+        }
+
+        auto obj = std::get<Object>(variable.value);
+        auto v = obj.properties.find(property_string);
+        if (v == obj.properties.end()) {
+            return Value{DataType::Undefined};
+        }
+
+        return v->second;
     }
 
-    return v->second;
+    std::cerr << "unsupported data type for property lookup\n";
+    assert(false);
 }
 
 Value Interpreter::execute_assignment_expression(AssignmentExpression *expression) {
@@ -149,23 +164,27 @@ Value Interpreter::execute_assignment_expression(AssignmentExpression *expressio
         call_stack.set_variable(e->value, right_value);
         return right_value;
     } else if (auto e = dynamic_cast<MemberExpression *>(expression->left)) {
-        auto variable = call_stack.lookup_variable(e->object);
+        auto variable = call_stack.lookup_variable(e->identifier);
         if (variable.type == DataType::Undefined) {
-            std::cerr << "reference error: no definition found for identifier \"" << e->object << "\"\n";
+            std::cerr << "reference error: no definition found for identifier \"" << e->identifier << "\"\n";
             assert(false);
         }
 
+        auto property = execute_expression(e->property);
+        assert(property.type == DataType::String);
+        auto property_string = std::get<std::string>(property.value);
+
         auto obj = std::get<Object>(variable.value);
-        auto v = obj.properties.find(e->property);
+        auto v = obj.properties.find(property_string);
         if (v == obj.properties.end()) {
-            obj.properties[e->property] = right_value;
+            obj.properties[property_string] = right_value;
         } else {
             v->second = right_value;
         }
 
         // this is probably a sign that variables should be stored as pointers
         variable.value = obj;
-        call_stack.set_variable(e->object, variable);
+        call_stack.set_variable(e->identifier, variable);
 
         return right_value;
     }

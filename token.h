@@ -26,6 +26,8 @@ enum class TokenType {
     RightBrace,
     LeftAngleBracket,
     RightAngleBracket,
+    LeftBracket,
+    RightBracket,
     EndOfFile
 };
 

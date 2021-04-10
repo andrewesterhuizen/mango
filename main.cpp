@@ -6,7 +6,7 @@
 #include "interpreter.h"
 
 int main() {
-    std::string src = "var x = { p: 123 }; x.p = 543543; x;";
+    std::string src = "var x = { p: 123 }; x[\"p\"];";
 
     mango::Lexer lexer;
 

@@ -34,6 +34,8 @@ class Lexer {
             {'!', TokenType::Exclamation},
             {'<', TokenType::LeftAngleBracket},
             {'>', TokenType::RightAngleBracket},
+            {'[', TokenType::LeftBracket},
+            {']', TokenType::RightBracket},
     };
 
     bool is_keyword(std::string text);

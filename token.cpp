@@ -38,6 +38,10 @@ std::string token_type_to_string(TokenType t) {
             return "LeftAngleBracket";
         case TokenType::RightAngleBracket:
             return "RightAngleBracket";
+        case TokenType::LeftBracket:
+            return "LeftBracket";
+        case TokenType::RightBracket:
+            return "RightBracket";
         case TokenType::Plus:
             return "Plus";
         case TokenType::Minus:

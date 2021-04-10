@@ -50,9 +50,9 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->append_line_no_indent("MemberExpression {");
         sb->increase_indent();
         sb->append("object: ");
-        sb->append_line_no_indent(e->object);
+        sb->append_line_no_indent(e->identifier);
         sb->append("property: ");
-        sb->append_line_no_indent(e->property);
+        expression_to_string(sb, e->property);
         sb->decrease_indent();
         sb->append_no_indent(" }");
     } else if (auto e = dynamic_cast<BinaryExpression *>(expression)) {

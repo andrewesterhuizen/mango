@@ -79,8 +79,8 @@ struct ObjectExpression : public Expression {
 };
 
 struct MemberExpression : public Expression {
-    std::string object;
-    std::string property;
+    std::string identifier;
+    Expression* property;
 };
 
 

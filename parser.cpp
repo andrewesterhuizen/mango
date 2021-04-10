@@ -32,6 +32,23 @@ Operator Parser::get_operator() {
     auto next = peek_next_token();
 
     switch (t.type) {
+        case TokenType::Keyword:
+        case TokenType::Identifier:
+        case TokenType::Number:
+        case TokenType::String:
+        case TokenType::Colon:
+        case TokenType::Dot:
+        case TokenType::Comma:
+        case TokenType::SemiColon:
+        case TokenType::LeftParen:
+        case TokenType::RightParen:
+        case TokenType::LeftBrace:
+        case TokenType::RightBrace:
+        case TokenType::LeftBracket:
+        case TokenType::RightBracket:
+        case TokenType::EndOfFile:
+            std::cerr << "invalid operator \"" << t.value << "\"\n";
+            assert(false);
         case TokenType::Plus:
             return Operator::Plus;
         case TokenType::Minus:
@@ -287,8 +304,10 @@ Expression *Parser::get_member_expression() {
     auto property_id_token = expect(TokenType::Identifier);
 
     auto me = new MemberExpression();
-    me->object = object_id_token.value;
-    me->property = property_id_token.value;
+    me->identifier = object_id_token.value;
+    auto prop = new IdentifierExpression();
+    prop->value = property_id_token.value;
+    me->property = prop;
 
     return me;
 };
@@ -318,6 +337,15 @@ Expression *Parser::get_expression() {
                 }
 
                 left = me;
+            } else if (peek_next_token().type == TokenType::LeftBracket) {
+                expect(TokenType::LeftBracket);
+                auto inner = get_expression();
+                expect(TokenType::RightBracket);
+
+                auto me = new MemberExpression();
+                me->identifier = t.value;
+                me->property = inner;
+                return me;
             } else if (peek_next_token().type == TokenType::Equals) {
                 backup();
                 left = get_assignment_expression();
@@ -328,6 +356,7 @@ Expression *Parser::get_expression() {
             }
             break;
         }
+
         case TokenType::Keyword: {
             backup();
             return get_function_expression();
@@ -357,7 +386,8 @@ Expression *Parser::get_expression() {
     if (next.type == TokenType::SemiColon ||
         next.type == TokenType::RightParen ||
         next.type == TokenType::Comma ||
-        next.type == TokenType::RightBrace) {
+        next.type == TokenType::RightBrace ||
+        next.type == TokenType::RightBracket) {
         return left;
     }
     next_token();
