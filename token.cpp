@@ -16,8 +16,12 @@ std::string token_type_to_string(TokenType t) {
             return "Number";
         case TokenType::String:
             return "String";
+        case TokenType::Colon:
+            return "Colon";
         case TokenType::SemiColon:
             return "SemiColon";
+        case TokenType::Dot:
+            return "Dot";
         case TokenType::Comma:
             return "Comma";
         case TokenType::Exclamation:

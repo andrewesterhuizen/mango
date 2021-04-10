@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 
 #include "string_builder.h"
 
@@ -14,7 +15,8 @@ enum class DataType {
 //    Float,
     String,
     Bool,
-    Function
+    Function,
+    Object,
 };
 
 std::string data_type_to_string(const DataType dt);
@@ -52,20 +54,14 @@ struct UndefinedExpression : public Expression {
 
 struct IdentifierExpression : public Expression {
     std::string value;
-
-    IdentifierExpression(std::string v) : value(v) {}
 };
 
 struct IntegerLiteralExpression : public Expression {
     int value;
-
-    IntegerLiteralExpression(int v) : value(v) {}
 };
 
 struct StringLiteralExpression : public Expression {
     std::string value;
-
-    StringLiteralExpression(std::string v) : value(v) {}
 };
 
 struct BlockStatement : public Statement {
@@ -78,11 +74,19 @@ struct FunctionExpression : public Expression {
     Statement *body;
 };
 
+struct ObjectExpression : public Expression {
+    std::unordered_map<std::string, Expression *> properties;
+};
+
+struct MemberExpression : public Expression {
+    std::string object;
+    std::string property;
+};
+
+
 struct FunctionCallExpression : public Expression {
     std::string value;
     std::vector<Expression *> arguments;
-
-    FunctionCallExpression(std::string v) : value(v) {}
 };
 
 
@@ -93,12 +97,6 @@ struct BinaryExpression : public Expression {
 };
 
 struct DeclarationStatement : public Statement {
-    DataType type;
-    std::string identifier;
-    Expression *value;
-};
-
-struct AssignmentStatement : public Statement {
     DataType type;
     std::string identifier;
     Expression *value;
@@ -119,10 +117,13 @@ struct WhileStatement : public Statement {
     Statement *body;
 };
 
+struct AssignmentExpression : public Expression {
+    Expression *left;
+    Expression *right;
+};
+
 struct ExpressionStatement : public Statement {
     Expression *value;
-
-    ExpressionStatement(Expression *e) : value(e) {};
 };
 
 class Program {

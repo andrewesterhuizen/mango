@@ -11,6 +11,8 @@ enum class TokenType {
     Equals,
     Number,
     String,
+    Colon,
+    Dot,
     SemiColon,
     Comma,
     Exclamation,

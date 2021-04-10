@@ -46,6 +46,15 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->append_no_indent("IdentifierExpression { value: ");
         sb->append_no_indent(e->value);
         sb->append_no_indent(" }");
+    }  else if (auto e = dynamic_cast<MemberExpression *>(expression)) {
+        sb->append_line_no_indent("MemberExpression {");
+        sb->increase_indent();
+        sb->append("object: ");
+        sb->append_line_no_indent(e->object);
+        sb->append("property: ");
+        sb->append_line_no_indent(e->property);
+        sb->decrease_indent();
+        sb->append_no_indent(" }");
     } else if (auto e = dynamic_cast<BinaryExpression *>(expression)) {
         sb->append_line_no_indent("BinaryExpression {");
 
@@ -53,6 +62,22 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
 
         sb->append("operator: ");
         sb->append_line_no_indent(operator_to_string(e->op));
+
+        sb->append("left: ");
+        expression_to_string(sb, e->left);
+        sb->append_line("");
+
+        sb->append("right: ");
+        expression_to_string(sb, e->right);
+        sb->append_line("");
+
+        sb->decrease_indent();
+
+        sb->append("}");
+    }  else if (auto e = dynamic_cast<AssignmentExpression *>(expression)) {
+        sb->append_line_no_indent("AssignmentExpression {");
+
+        sb->increase_indent();
 
         sb->append("left: ");
         expression_to_string(sb, e->left);
@@ -105,6 +130,9 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
 
         sb->decrease_indent();
         sb->append_line("}");
+    } else if (auto e = dynamic_cast<ObjectExpression *>(expression)) {
+        sb->append_line_no_indent("ObjectExpression {");
+        sb->append_line("}");
     } else {
         std::cerr << "unknown expression\n";
         assert(false);
@@ -119,21 +147,6 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
 
         sb->append("type: ");
         sb->append_line_no_indent(data_type_to_string(s->type));
-
-        sb->append("identifier: ");
-        sb->append_line_no_indent(s->identifier);
-
-        sb->append("value: ");
-        expression_to_string(sb, s->value);
-        sb->append_line_no_indent("");
-
-        sb->decrease_indent();
-
-        sb->append_line("}");
-    } else if (auto s = dynamic_cast<AssignmentStatement *>(statement)) {
-        sb->append_line("AssignmentStatement {");
-
-        sb->increase_indent();
 
         sb->append("identifier: ");
         sb->append_line_no_indent(s->identifier);

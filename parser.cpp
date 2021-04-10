@@ -7,14 +7,7 @@ Token Parser::current_token() {
 }
 
 Token Parser::next_token() {
-    index++;
-
-    // TODO: this is a hack to make things work for now, but it shouldn't be needed
-    if (index >= tokens.size()) {
-        return Token{TokenType::EndOfFile, ""};
-    }
-
-    return tokens.at(index);
+    return tokens.at(++index);
 }
 
 Token Parser::peek_next_token() {
@@ -74,234 +67,348 @@ Operator Parser::get_operator() {
             return Operator::GreaterThan;
     }
 
-    std::cout << "invalid operator \"" << t.value << "\"\n";
+    std::cerr << "invalid operator \"" << t.value << "\"\n";
     assert(false);
 }
 
 Statement *Parser::get_declaration_statement() {
-    auto s = new DeclarationStatement;
-    s->type = DataType::Integer;
+    std::cout << "get_declaration_statement\n";
+
+    auto type_token = expect(TokenType::Keyword);
+    // declarations with var only for now
+    assert(type_token.value == "var");
 
     auto id_token = expect(TokenType::Identifier);
-    s->identifier = id_token.value;
 
     expect(TokenType::Equals);
 
     auto next = next_token();
+
+    Expression *value;
+
     if (next.type == TokenType::SemiColon) {
-        s->value = new UndefinedExpression();
-        return s;
+        value = new UndefinedExpression();
+    } else {
+        backup();
+        value = get_expression();
+        if (peek_next_token().type == TokenType::SemiColon) {
+            next_token();
+        }
     }
 
-    s->value = get_expression();
+    auto s = new DeclarationStatement;
+    // TODO: check expressions for type
+    s->type = DataType::Integer;
+    s->identifier = id_token.value;
+    s->value = value;
 
     return s;
 }
 
 Statement *Parser::get_return_statement() {
+    std::cout << "get_return_statement\n";
+
+    auto keyword_token = expect(TokenType::Keyword);
+    assert(keyword_token.value == "return");
+
     auto s = new ReturnStatement;
 
-    auto next = next_token();
-    if (next.type == TokenType::SemiColon) {
-        s->value = new UndefinedExpression();
+    // check for return without a value
+    if (peek_next_token().type == TokenType::SemiColon) {
+        s->value = new UndefinedExpression;
         return s;
     }
 
     s->value = get_expression();
-
-    if (peek_next_token().type == TokenType::SemiColon) {
-        next_token();
-    }
+    expect(TokenType::SemiColon);
 
     return s;
 }
 
 Statement *Parser::get_if_statement() {
-    auto s = new IfStatement;
+    std::cout << "get_if_statement\n";
+
+    auto keyword_token = expect(TokenType::Keyword);
+    assert(keyword_token.value == "if");
 
     expect(TokenType::LeftParen);
-    next_token();
-    s->condition = get_expression();
+    auto condition = get_expression();
     expect(TokenType::RightParen);
-    next_token();
 
-    s->if_block = get_statement();
-    s->else_block = nullptr;
+    auto if_block = get_statement();
+    Statement *else_block = nullptr;
 
-    auto next = next_token();
+    auto next = peek_next_token();
     if (next.type == TokenType::Keyword && next.value == "else") {
         next_token();
-        s->else_block = get_statement();
+        else_block = get_statement();
     }
+
+    auto s = new IfStatement;
+    s->condition = condition;
+    s->if_block = if_block;
+    s->else_block = else_block;
 
     return s;
 }
 
 Statement *Parser::get_while_statement() {
-    auto s = new WhileStatement;
+    std::cout << "get_while_statement\n";
+
+    auto keyword_token = expect(TokenType::Keyword);
+    assert(keyword_token.value == "while");
 
     expect(TokenType::LeftParen);
-    next_token();
-    s->condition = get_expression();
+    auto condition = get_expression();
     expect(TokenType::RightParen);
-    next_token();
 
-    s->body = get_statement();
+    auto body = get_statement();
 
-    return s;
-}
-
-Statement *Parser::get_assignment_statement() {
-    auto s = new AssignmentStatement;
-    s->type = DataType::Integer;
-    auto id_token = expect(TokenType::Identifier);
-    s->identifier = id_token.value;
-    expect(TokenType::Equals);
-    next_token();
-    s->value = get_expression();
-
+    auto s = new WhileStatement;
+    s->condition = condition;
+    s->body = body;
     return s;
 }
 
 Statement *Parser::get_block_statement() {
-    auto s = new BlockStatement;
+    std::cout << "get_block_statement\n";
+
     expect(TokenType::LeftBrace);
-    if (peek_next_token().type == TokenType::RightBrace) {
-        return s;
+
+    auto s = new BlockStatement;
+
+    // check for empty block
+    if (peek_next_token().type != TokenType::RightBrace) {
+        s->statements = get_statements();
     }
 
-    auto next = next_token();
-    s->statements = get_statements();
-
-    if (peek_next_token().type == TokenType::RightBrace) {
-        next_token();
-    }
-
-    if (peek_next_token().type == TokenType::SemiColon) {
-        next_token();
-    }
+    expect(TokenType::RightBrace);
+    expect(TokenType::SemiColon);
 
     return s;
 }
 
-Expression *Parser::get_expression() {
-    auto t = current_token();
+Expression *Parser::get_function_expression() {
+    std::cout << "get_function_expression\n";
 
-    Expression *left = nullptr;
+    auto keyword_token = expect(TokenType::Keyword);
+    assert(keyword_token.value == "func");
+
+    expect(TokenType::LeftParen);
+
+    auto params = std::vector<std::string>();
+
+    while (peek_next_token().type == TokenType::Identifier) {
+        params.push_back(next_token().value);
+        if (peek_next_token().type == TokenType::Comma) {
+            next_token();
+        }
+    }
+
+    expect(TokenType::RightParen);
+
+    auto body = get_statement();
+
+    auto fe = new FunctionExpression();
+    fe->parameters = params;
+    fe->body = body;
+
+    return fe;
+}
+
+Expression *Parser::get_function_call_expression() {
+    std::cout << "get_function_call_expression\n";
+
+    auto id_token = expect(TokenType::Identifier);
+
+    expect(TokenType::LeftParen);
+
+    auto args = std::vector<Expression *>();
+
+    while (peek_next_token().type != TokenType::RightParen) {
+        args.push_back(get_expression());
+        if (peek_next_token().type == TokenType::Comma) {
+            next_token();
+        }
+    }
+
+    expect(TokenType::RightParen);
+
+    auto fce = new FunctionCallExpression();
+    fce->value = id_token.value;
+    fce->arguments = args;
+    return fce;
+};
+
+Expression *Parser::get_assignment_expression() {
+    std::cout << "get_assignment_expression\n";
+
+    auto id_token = expect(TokenType::Identifier);
+    expect(TokenType::Equals);
+    auto ae = new AssignmentExpression();
+    auto ie = new IdentifierExpression();
+    ie->value = id_token.value;
+    ae->left = ie;
+    ae->right = get_expression();
+    return ae;
+};
+
+Expression *Parser::get_object_expression() {
+    std::cout << "get_object_expression\n";
+
+    expect(TokenType::LeftBrace);
+
+    std::unordered_map<std::string, Expression *> props;
+
+
+    while (peek_next_token().type != TokenType::RightBrace) {
+        auto id_token = expect(TokenType::Identifier);
+        expect(TokenType::Colon);
+
+        props[id_token.value] = get_expression();
+
+        if (peek_next_token().type == TokenType::Comma) {
+            next_token();
+        }
+    };
+
+    expect(TokenType::RightBrace);
+
+    auto oe = new ObjectExpression();
+    oe->properties = props;
+    return oe;
+};
+
+Expression *Parser::get_member_expression() {
+    std::cout << "get_member_expression\n";
+
+    auto object_id_token = expect(TokenType::Identifier);
+    expect(TokenType::Dot);
+    auto property_id_token = expect(TokenType::Identifier);
+
+    auto me = new MemberExpression();
+    me->object = object_id_token.value;
+    me->property = property_id_token.value;
+
+    return me;
+};
+
+Expression *Parser::get_expression() {
+    std::cout << "get_expression\n";
+
+    auto t = next_token();
+
+    Expression *left;
 
     switch (t.type) {
         case TokenType::Identifier: {
             if (peek_next_token().type == TokenType::LeftParen) {
-                auto fce = new FunctionCallExpression{t.value};
-                expect(TokenType::LeftParen);
-                next_token();
+                backup();
+                left = get_function_call_expression();
+            } else if (peek_next_token().type == TokenType::Dot) {
+                backup();
+                auto me = get_member_expression();
 
-                while (current_token().type != TokenType::RightParen) {
-                    fce->arguments.push_back(get_expression());
-                    if (peek_next_token().type == TokenType::Comma) {
-                        next_token();
-                    }
-                    next_token();
+                if (peek_next_token().type == TokenType::Equals) {
+                    expect(TokenType::Equals);
+                    auto ae = new AssignmentExpression();
+                    ae->left = me;
+                    ae->right = get_expression();
+                    return ae;
                 }
 
-                left = fce;
+                left = me;
+            } else if (peek_next_token().type == TokenType::Equals) {
+                backup();
+                left = get_assignment_expression();
             } else {
-                left = new IdentifierExpression{t.value};
+                auto ie = new IdentifierExpression();
+                ie->value = t.value;
+                left = ie;
             }
             break;
         }
         case TokenType::Keyword: {
-            if (t.value == "func") {
-                auto fe = new FunctionExpression();
-
-                expect(TokenType::LeftParen);
-
-                while (peek_next_token().type == TokenType::Identifier) {
-                    fe->parameters.push_back(next_token().value);
-                    if (peek_next_token().type == TokenType::Comma) {
-                        next_token();
-                    }
-                }
-
-                expect(TokenType::RightParen);
-
-                next_token();
-                fe->body = get_statement();
-                return fe;
-            }
+            backup();
+            return get_function_expression();
+        }
+        case TokenType::LeftBrace: {
+            backup();
+            return get_object_expression();
+        }
+        case TokenType::Number: {
+            auto ile = new IntegerLiteralExpression;
+            ile->value = atoi(t.value.data());
+            left = ile;
             break;
         }
-        case TokenType::Number:
-            left = new IntegerLiteralExpression{atoi(t.value.data())};
+        case TokenType::String: {
+            auto sle = new StringLiteralExpression;
+            sle->value = t.value;
+            left = sle;
             break;
-        case TokenType::String:
-            left = new StringLiteralExpression{t.value};
-            break;
-
+        }
         default:
         UNEXPECTED_TOKEN(t);
-
     }
 
-    auto next = next_token();
-
-    if (next.type == TokenType::RightBrace || next.type == TokenType::RightParen || next.type == TokenType::Comma) {
-        backup();
+    auto next = peek_next_token();
+    // check for tokens that end an expression
+    if (next.type == TokenType::SemiColon ||
+        next.type == TokenType::RightParen ||
+        next.type == TokenType::Comma ||
+        next.type == TokenType::RightBrace) {
         return left;
     }
-
-    if (next.type == TokenType::SemiColon) {
-        return left;
-    }
+    next_token();
 
     auto op = get_operator();
-    next_token();
     auto right = get_expression();
 
     auto b = new BinaryExpression;
     b->op = op;
     b->left = left;
     b->right = right;
-
     return b;
 }
 
 Statement *Parser::get_statement() {
-    auto t = current_token();
+    auto t = next_token();
+    std::cout << "get_statement: t = " << t.type << "\n";
 
     switch (t.type) {
         case TokenType::Keyword: {
             if (t.value == "var") {
+                backup();
                 return get_declaration_statement();
             }
 
             if (t.value == "return") {
+                backup();
                 return get_return_statement();
             }
 
             if (t.value == "if") {
+                backup();
                 return get_if_statement();
             }
 
             if (t.value == "while") {
+                backup();
                 return get_while_statement();
             }
 
             UNEXPECTED_TOKEN(t);
         }
-        case TokenType::Identifier: {
-            if (peek_next_token().type == TokenType::Equals) {
-                backup();
-                return get_assignment_statement();
-            }
 
-            return new ExpressionStatement(get_expression());
-        }
-        case TokenType::Number: {
-            return new ExpressionStatement(get_expression());
-        }
+        case TokenType::Identifier:
+        case TokenType::Number:
         case TokenType::String: {
-            return new ExpressionStatement(get_expression());
+            backup();
+            auto s = new ExpressionStatement();
+            s->value = get_expression();
+            expect(TokenType::SemiColon);
+            return s;
         }
         case TokenType::LeftBrace: {
             backup();
@@ -313,23 +420,30 @@ Statement *Parser::get_statement() {
 };
 
 std::vector<Statement *> Parser::get_statements() {
+    std::cout << "get_statements\n";
+
     std::vector<Statement *> statements;
 
-    auto t = current_token();
-    while (t.type != TokenType::EndOfFile && t.type != TokenType::RightBrace) {
+    auto next_token = peek_next_token();
+
+    while (next_token.type != TokenType::EndOfFile && next_token.type != TokenType::RightBrace) {
         statements.push_back(get_statement());
-        t = next_token();
+        next_token = peek_next_token();
     }
 
     return statements;
 }
 
 Program Parser::parse(std::vector<Token> tokens) {
+    std::cout << "parse\n";
+
     this->tokens = tokens;
 
     Program program;
+    backup();
     program.statements = get_statements();
 
     return program;
 }
+
 }

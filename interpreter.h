@@ -52,7 +52,11 @@ struct Function {
     std::function<Value(std::vector<Value>)> builtin_fn;
 };
 
-using ValueVariant = std::variant<int, std::string, bool, Function>;
+struct Object {
+    std::unordered_map<std::string, Value> properties;
+};
+
+using ValueVariant = std::variant<int, std::string, bool, Function, Object>;
 
 struct Value {
     DataType type = DataType::Undefined;
@@ -110,15 +114,20 @@ class Interpreter {
 
     Value execute_string_literal_expression(StringLiteralExpression *e);
 
+    Value execute_object_expression(ObjectExpression *e);
+
     Value execute_function_expression(FunctionExpression *e);
 
     Value execute_function_call_expression(FunctionCallExpression *e);
+
+    Value execute_member_expression(MemberExpression *expression);
+
+    Value execute_assignment_expression(AssignmentExpression *e);
 
     Value execute_expression(Expression *expression);
 
     Value execute_declaration_statement(DeclarationStatement *s);
 
-    Value execute_assignment_statement(AssignmentStatement *s);
 
     Value execute_expression_statement(ExpressionStatement *s);
 

@@ -19,6 +19,17 @@ std::ostream &operator<<(std::ostream &os, const Value &v) {
         case DataType::Function:
             os << "function";
             return os;
+        case DataType::Object:
+            os << "{\n";
+
+            auto obj = std::get<Object>(v.value);
+
+            for (auto prop : obj.properties) {
+                os << "  " << prop.first << ": " << prop.second << ",\n";
+            }
+
+            os << "}";
+            return os;
     }
 
     std::cerr << "\nunknown value to convert to string\n";
@@ -37,6 +48,8 @@ bool value_is_truthy(Value v) {
             return std::get<bool>(v.value);
         case DataType::Function:
             return true;
+        case DataType::Object:
+            return true;
     }
 
     std::cerr << "\nunknown value to check truthyness\n";
@@ -45,7 +58,7 @@ bool value_is_truthy(Value v) {
 
 auto add_visitor = INTEGER_AND_STRING_OPERATIONS_VISITOR(+);
 auto subtract_visitor = INTEGER_OPERATIONS_VISITOR(-);
-auto multiply_visitor = INTEGER_OPERATIONS_VISITOR(-);
+auto multiply_visitor = INTEGER_OPERATIONS_VISITOR(*);
 auto divide_visitor = INTEGER_OPERATIONS_VISITOR(/);
 auto equal_to_visitor = INTEGER_AND_STRING_LOGICAL_OPERATIONS_VISITOR(==);
 auto not_equal_to_visitor = INTEGER_AND_STRING_LOGICAL_OPERATIONS_VISITOR(!=);
@@ -113,12 +126,75 @@ Value Interpreter::execute_string_literal_expression(StringLiteralExpression *e)
     return v;
 }
 
+Value Interpreter::execute_member_expression(MemberExpression *e) {
+    auto variable = call_stack.lookup_variable(e->object);
+    if (variable.type == DataType::Undefined) {
+        std::cerr << "reference error: no definition found for identifier \"" << e->object << "\"\n";
+        assert(false);
+    }
+
+    auto obj = std::get<Object>(variable.value);
+    auto v = obj.properties.find(e->property);
+    if (v == obj.properties.end()) {
+        return Value{DataType::Undefined};
+    }
+
+    return v->second;
+}
+
+Value Interpreter::execute_assignment_expression(AssignmentExpression *expression) {
+    auto right_value = execute_expression(expression->right);
+
+    if (auto e = dynamic_cast<IdentifierExpression *>(expression->left)) {
+        call_stack.set_variable(e->value, right_value);
+        return right_value;
+    } else if (auto e = dynamic_cast<MemberExpression *>(expression->left)) {
+        auto variable = call_stack.lookup_variable(e->object);
+        if (variable.type == DataType::Undefined) {
+            std::cerr << "reference error: no definition found for identifier \"" << e->object << "\"\n";
+            assert(false);
+        }
+
+        auto obj = std::get<Object>(variable.value);
+        auto v = obj.properties.find(e->property);
+        if (v == obj.properties.end()) {
+            obj.properties[e->property] = right_value;
+        } else {
+            v->second = right_value;
+        }
+
+        // this is probably a sign that variables should be stored as pointers
+        variable.value = obj;
+        call_stack.set_variable(e->object, variable);
+
+        return right_value;
+    }
+
+    assert(false);
+}
+
+Value Interpreter::execute_object_expression(ObjectExpression *e) {
+    Value v;
+    v.type = DataType::Object;
+    auto obj = Object{};
+
+
+    for (auto prop : e->properties) {
+        obj.properties[prop.first] = execute_expression(prop.second);
+    }
+
+    v.value = obj;
+
+    return v;
+}
+
 Value Interpreter::execute_function_expression(FunctionExpression *e) {
     Value v;
     v.type = DataType::Function;
     v.value = Function{e->parameters, e->body};
     return v;
 }
+
 
 Value Interpreter::execute_function_call_expression(FunctionCallExpression *e) {
     auto function_value = call_stack.lookup_variable(e->value);
@@ -141,8 +217,6 @@ Value Interpreter::execute_function_call_expression(FunctionCallExpression *e) {
         call_stack.new_frame();
 
         for (int i = 0; i < e->arguments.size(); i++) {
-
-
             auto name = fn.parameters[i];
             call_stack.set_variable(name, execute_expression(e->arguments[i]));
         }
@@ -168,6 +242,12 @@ Value Interpreter::execute_expression(Expression *expression) {
         return execute_function_expression(e);
     } else if (auto e = dynamic_cast<FunctionCallExpression *>(expression)) {
         return execute_function_call_expression(e);
+    } else if (auto e = dynamic_cast<ObjectExpression *>(expression)) {
+        return execute_object_expression(e);
+    } else if (auto e = dynamic_cast<MemberExpression *>(expression)) {
+        return execute_member_expression(e);
+    } else if (auto e = dynamic_cast<AssignmentExpression *>(expression)) {
+        return execute_assignment_expression(e);
     } else {
         std::cerr << "unknown expression type\n";
         assert(false);
@@ -175,10 +255,6 @@ Value Interpreter::execute_expression(Expression *expression) {
 }
 
 Value Interpreter::execute_declaration_statement(DeclarationStatement *s) {
-    return call_stack.set_variable(s->identifier, execute_expression(s->value));
-}
-
-Value Interpreter::execute_assignment_statement(AssignmentStatement *s) {
     return call_stack.set_variable(s->identifier, execute_expression(s->value));
 }
 
@@ -224,8 +300,6 @@ Value Interpreter::execute_statement(Statement *statement) {
         return execute_declaration_statement(s);
     } else if (auto s = dynamic_cast<ExpressionStatement *>(statement)) {
         return execute_expression_statement(s);
-    } else if (auto s = dynamic_cast<AssignmentStatement *>(statement)) {
-        return execute_assignment_statement(s);
     } else if (auto s = dynamic_cast<BlockStatement *>(statement)) {
         return execute_block_statement(s);
     } else if (auto s = dynamic_cast<ReturnStatement *>(statement)) {

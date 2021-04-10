@@ -6,7 +6,7 @@
 #include "interpreter.h"
 
 int main() {
-    std::string src = "if(1 < 0) { print(111); } else { print(000); }";
+    std::string src = "var x = { p: 123 }; x.p = 543543; x;";
 
     mango::Lexer lexer;
 

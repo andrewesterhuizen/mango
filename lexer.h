@@ -16,8 +16,10 @@ class Lexer {
     std::vector<std::string> keywords{"var", "func", "return", "if", "else", "while"};
 
     std::unordered_map<char, TokenType> single_char_tokens = {
+            {':', TokenType::Colon},
             {';', TokenType::SemiColon},
             {',', TokenType::Comma},
+            {'.', TokenType::Dot},
             {'=', TokenType::Equals},
             {'(', TokenType::LeftParen},
             {')', TokenType::RightParen},
