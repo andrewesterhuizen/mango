@@ -3,7 +3,7 @@
 
 #include "lexer.h"
 #include "parser.h"
-#include "interpreter.h"
+#include "interpreter/interpreter.h"
 
 int main() {
     std::string src = "var a = [1,2,3,4,5]; "

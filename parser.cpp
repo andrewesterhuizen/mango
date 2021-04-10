@@ -46,17 +46,12 @@ Operator Parser::get_operator() {
         case TokenType::RightBrace:
         case TokenType::LeftBracket:
         case TokenType::RightBracket:
-        case TokenType::EndOfFile:
-            std::cerr << "invalid operator \"" << t.value << "\"\n";
+        case TokenType::EndOfFile:std::cerr << "invalid operator \"" << t.value << "\"\n";
             assert(false);
-        case TokenType::Plus:
-            return Operator::Plus;
-        case TokenType::Minus:
-            return Operator::Minus;
-        case TokenType::Asterisk:
-            return Operator::Multiply;
-        case TokenType::Slash:
-            return Operator::Divide;
+        case TokenType::Plus:return Operator::Plus;
+        case TokenType::Minus:return Operator::Minus;
+        case TokenType::Asterisk:return Operator::Multiply;
+        case TokenType::Slash:return Operator::Divide;
         case TokenType::Equals:
             if (next.type != TokenType::Equals) {
                 break;
@@ -277,7 +272,6 @@ Expression *Parser::get_object_expression() {
 
     std::unordered_map<std::string, Expression *> props;
 
-
     while (peek_next_token().type != TokenType::RightBrace) {
         auto id_token = expect(TokenType::Identifier);
         expect(TokenType::Colon);
@@ -402,8 +396,7 @@ Expression *Parser::get_expression() {
             left = sle;
             break;
         }
-        default:
-        UNEXPECTED_TOKEN(t);
+        default:UNEXPECTED_TOKEN(t);
     }
 
     auto next = peek_next_token();
@@ -469,8 +462,7 @@ Statement *Parser::get_statement() {
             backup();
             return get_block_statement();
         }
-        default:
-        UNEXPECTED_TOKEN(t);
+        default:UNEXPECTED_TOKEN(t);
     }
 };
 

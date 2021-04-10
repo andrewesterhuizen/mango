@@ -13,34 +13,34 @@ namespace mango {
 struct Value;
 
 struct Function {
-  std::vector<std::string> parameters;
-  Statement *body;
-  bool is_builtin;
-  std::function<Value(std::vector<Value>)> builtin_fn;
+    std::vector<std::string> parameters;
+    Statement *body;
+    bool is_builtin;
+    std::function<Value(std::vector<Value>)> builtin_fn;
 };
 
 struct Object {
-  std::unordered_map<std::string, Value> properties;
+    std::unordered_map<std::string, Value> properties;
 };
 
 struct Array {
-  std::vector<Value> elements;
+    std::vector<Value> elements;
 };
 
 using ValueVariant = std::variant<int, std::string, bool, Function, Object, Array>;
 
 struct Value {
-  DataType type = DataType::Undefined;
-  ValueVariant value;
-  bool is_truthy();
-  std::string to_string();
+    DataType type = DataType::Undefined;
+    ValueVariant value;
+    bool is_truthy();
+    std::string to_string();
 };
 
 std::ostream &operator<<(std::ostream &os, Value &t);
 
 template<class... Ts>
 struct overload : Ts ... {
-  using Ts::operator()...;
+    using Ts::operator()...;
 };
 template<class... Ts> overload(Ts...) -> overload<Ts...>;
 

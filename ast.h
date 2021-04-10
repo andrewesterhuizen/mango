@@ -88,12 +88,10 @@ struct MemberExpression : public Expression {
     Expression *property;
 };
 
-
 struct FunctionCallExpression : public Expression {
     std::string value;
     std::vector<Expression *> arguments;
 };
-
 
 struct BinaryExpression : public Expression {
     Operator op;

@@ -5,17 +5,17 @@
 namespace mango {
 
 auto operator_string_lookup = std::unordered_map<Operator, std::string>{
-        {Operator::Plus,                 "+"},
-        {Operator::Minus,                "-"},
-        {Operator::Multiply,             "*"},
-        {Operator::Divide,               "/"},
-        {Operator::EqualTo,              "=="},
-        {Operator::NotEqualTo,           "!="},
-        {Operator::Not,                  "!"},
-        {Operator::LessThan,             "<"},
-        {Operator::LessThanOrEqualTo,    "<="},
-        {Operator::GreaterThan,          ">"},
-        {Operator::GreaterThanOrEqualTo, ">="},
+    {Operator::Plus, "+"},
+    {Operator::Minus, "-"},
+    {Operator::Multiply, "*"},
+    {Operator::Divide, "/"},
+    {Operator::EqualTo, "=="},
+    {Operator::NotEqualTo, "!="},
+    {Operator::Not, "!"},
+    {Operator::LessThan, "<"},
+    {Operator::LessThanOrEqualTo, "<="},
+    {Operator::GreaterThan, ">"},
+    {Operator::GreaterThanOrEqualTo, ">="},
 };
 
 std::string operator_to_string(Operator op) {
@@ -31,7 +31,6 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     os << operator_to_string(op);
     return os;
 }
-
 
 void expression_to_string(string_builder::StringBuilder *sb, Expression *expression) {
     if (auto e = dynamic_cast<IntegerLiteralExpression *>(expression)) {
@@ -283,10 +282,10 @@ std::string ast_to_string(Program ast) {
 }
 
 auto data_type_string_lookup = std::unordered_map<DataType, std::string>{
-        {DataType::Undefined, "undefined"},
-        {DataType::String,    "string"},
-        {DataType::Integer,   "integer"},
-        {DataType::Function,  "function"},
+    {DataType::Undefined, "undefined"},
+    {DataType::String, "string"},
+    {DataType::Integer, "integer"},
+    {DataType::Function, "function"},
 };
 
 std::string data_type_to_string(const DataType dt) {
