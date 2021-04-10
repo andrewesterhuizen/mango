@@ -3,4 +3,13 @@ project(mango)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(mango main.cpp lexer.cpp token.cpp parser.cpp ast.cpp interpreter.cpp string_builder.cpp)
+add_executable(mango
+               main.cpp
+               lexer.cpp
+               token.cpp
+               parser.cpp
+               ast.cpp
+               interpreter/interpreter.cpp
+               string_builder.cpp
+               interpreter/value.cpp
+               interpreter/scope.cpp)
