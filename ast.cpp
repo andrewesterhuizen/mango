@@ -5,17 +5,17 @@
 namespace mango {
 
 auto operator_string_lookup = std::unordered_map<Operator, std::string>{
-    {Operator::Plus, "+"},
-    {Operator::Minus, "-"},
-    {Operator::Multiply, "*"},
-    {Operator::Divide, "/"},
-    {Operator::EqualTo, "=="},
-    {Operator::NotEqualTo, "!="},
-    {Operator::Not, "!"},
-    {Operator::LessThan, "<"},
-    {Operator::LessThanOrEqualTo, "<="},
-    {Operator::GreaterThan, ">"},
-    {Operator::GreaterThanOrEqualTo, ">="},
+        {Operator::Plus,                 "+"},
+        {Operator::Minus,                "-"},
+        {Operator::Multiply,             "*"},
+        {Operator::Divide,               "/"},
+        {Operator::EqualTo,              "=="},
+        {Operator::NotEqualTo,           "!="},
+        {Operator::Not,                  "!"},
+        {Operator::LessThan,             "<"},
+        {Operator::LessThanOrEqualTo,    "<="},
+        {Operator::GreaterThan,          ">"},
+        {Operator::GreaterThanOrEqualTo, ">="},
 };
 
 std::string operator_to_string(Operator op) {
@@ -32,20 +32,20 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     return os;
 }
 
-void expression_to_string(string_builder::StringBuilder *sb, Expression *expression) {
-    if (auto e = dynamic_cast<IntegerLiteralExpression *>(expression)) {
+void expression_to_string(string_builder::StringBuilder* sb, Expression* expression) {
+    if (auto e = dynamic_cast<IntegerLiteralExpression*>(expression)) {
         sb->append_no_indent("IntegerLiteralExpression { value: ");
         sb->append_no_indent(std::to_string(e->value));
         sb->append_no_indent(" }");
-    } else if (auto e = dynamic_cast<StringLiteralExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<StringLiteralExpression*>(expression)) {
         sb->append_no_indent("StringLiteralExpression { value: ");
         sb->append_no_indent(e->value);
         sb->append_no_indent(" }");
-    } else if (auto e = dynamic_cast<IdentifierExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<IdentifierExpression*>(expression)) {
         sb->append_no_indent("IdentifierExpression { value: ");
         sb->append_no_indent(e->value);
         sb->append_no_indent(" }");
-    } else if (auto e = dynamic_cast<MemberExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<MemberExpression*>(expression)) {
         sb->append_line_no_indent("MemberExpression {");
         sb->increase_indent();
         sb->append("object: ");
@@ -54,7 +54,7 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         expression_to_string(sb, e->property);
         sb->decrease_indent();
         sb->append_no_indent(" }");
-    } else if (auto e = dynamic_cast<BinaryExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<BinaryExpression*>(expression)) {
         sb->append_line_no_indent("BinaryExpression {");
 
         sb->increase_indent();
@@ -73,7 +73,7 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->decrease_indent();
 
         sb->append("}");
-    } else if (auto e = dynamic_cast<AssignmentExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<AssignmentExpression*>(expression)) {
         sb->append_line_no_indent("AssignmentExpression {");
 
         sb->increase_indent();
@@ -89,7 +89,7 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
         sb->decrease_indent();
 
         sb->append("}");
-    } else if (auto e = dynamic_cast<FunctionExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<FunctionExpression*>(expression)) {
         sb->append_line_no_indent("FunctionExpression {");
 
         // params
@@ -108,7 +108,7 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
 
         sb->decrease_indent();
         sb->append_line("}");
-    } else if (auto e = dynamic_cast<FunctionCallExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<FunctionCallExpression*>(expression)) {
         sb->append_line_no_indent("FunctionCallExpression {");
 
         sb->increase_indent();
@@ -129,10 +129,10 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
 
         sb->decrease_indent();
         sb->append_line("}");
-    } else if (auto e = dynamic_cast<ObjectExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<ObjectExpression*>(expression)) {
         sb->append_line_no_indent("ObjectExpression {");
         sb->append_line("}");
-    } else if (auto e = dynamic_cast<ArrayExpression *>(expression)) {
+    } else if (auto e = dynamic_cast<ArrayExpression*>(expression)) {
         sb->append_line_no_indent("ArrayExpression {");
 
         sb->append_line("elements: [");
@@ -154,8 +154,8 @@ void expression_to_string(string_builder::StringBuilder *sb, Expression *express
     }
 }
 
-void statement_to_string(string_builder::StringBuilder *sb, Statement *statement) {
-    if (auto s = dynamic_cast<DeclarationStatement *>(statement)) {
+void statement_to_string(string_builder::StringBuilder* sb, Statement* statement) {
+    if (auto s = dynamic_cast<DeclarationStatement*>(statement)) {
         sb->append_line("DeclarationStatement {");
 
         sb->increase_indent();
@@ -173,7 +173,7 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
         sb->decrease_indent();
 
         sb->append_line("}");
-    } else if (auto s = dynamic_cast<ExpressionStatement *>(statement)) {
+    } else if (auto s = dynamic_cast<ExpressionStatement*>(statement)) {
         sb->append_line("ExpressionStatement {");
 
         sb->increase_indent();
@@ -185,7 +185,7 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
         sb->decrease_indent();
 
         sb->append_line("}");
-    } else if (auto s = dynamic_cast<BlockStatement *>(statement)) {
+    } else if (auto s = dynamic_cast<BlockStatement*>(statement)) {
         sb->append_line("BlockStatement {");
         sb->increase_indent();
 
@@ -206,7 +206,7 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
         sb->decrease_indent();
 
         sb->append_line("}");
-    } else if (auto s = dynamic_cast<ReturnStatement *>(statement)) {
+    } else if (auto s = dynamic_cast<ReturnStatement*>(statement)) {
         sb->append_line("ReturnStatement {");
 
         sb->increase_indent();
@@ -218,7 +218,7 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
         sb->decrease_indent();
 
         sb->append_line("}");
-    } else if (auto s = dynamic_cast<IfStatement *>(statement)) {
+    } else if (auto s = dynamic_cast<IfStatement*>(statement)) {
         sb->append_line("IfStatement {");
 
         sb->increase_indent();
@@ -238,7 +238,7 @@ void statement_to_string(string_builder::StringBuilder *sb, Statement *statement
         sb->decrease_indent();
 
         sb->append_line("}");
-    } else if (auto s = dynamic_cast<WhileStatement *>(statement)) {
+    } else if (auto s = dynamic_cast<WhileStatement*>(statement)) {
         sb->append_line("WhileStatement {");
 
         sb->increase_indent();
@@ -282,10 +282,10 @@ std::string ast_to_string(Program ast) {
 }
 
 auto data_type_string_lookup = std::unordered_map<DataType, std::string>{
-    {DataType::Undefined, "undefined"},
-    {DataType::String, "string"},
-    {DataType::Integer, "integer"},
-    {DataType::Function, "function"},
+        {DataType::Undefined, "undefined"},
+        {DataType::String,    "string"},
+        {DataType::Integer,   "integer"},
+        {DataType::Function,  "function"},
 };
 
 std::string data_type_to_string(const DataType dt) {

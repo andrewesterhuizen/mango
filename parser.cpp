@@ -46,12 +46,17 @@ Operator Parser::get_operator() {
         case TokenType::RightBrace:
         case TokenType::LeftBracket:
         case TokenType::RightBracket:
-        case TokenType::EndOfFile:std::cerr << "invalid operator \"" << t.value << "\"\n";
+        case TokenType::EndOfFile:
+            std::cerr << "invalid operator \"" << t.value << "\"\n";
             assert(false);
-        case TokenType::Plus:return Operator::Plus;
-        case TokenType::Minus:return Operator::Minus;
-        case TokenType::Asterisk:return Operator::Multiply;
-        case TokenType::Slash:return Operator::Divide;
+        case TokenType::Plus:
+            return Operator::Plus;
+        case TokenType::Minus:
+            return Operator::Minus;
+        case TokenType::Asterisk:
+            return Operator::Multiply;
+        case TokenType::Slash:
+            return Operator::Divide;
         case TokenType::Equals:
             if (next.type != TokenType::Equals) {
                 break;
@@ -83,7 +88,7 @@ Operator Parser::get_operator() {
     assert(false);
 }
 
-Statement *Parser::get_declaration_statement() {
+Statement* Parser::get_declaration_statement() {
     std::cout << "get_declaration_statement\n";
 
     auto type_token = expect(TokenType::Keyword);
@@ -96,7 +101,7 @@ Statement *Parser::get_declaration_statement() {
 
     auto next = next_token();
 
-    Expression *value;
+    Expression* value;
 
     if (next.type == TokenType::SemiColon) {
         value = new UndefinedExpression();
@@ -117,7 +122,7 @@ Statement *Parser::get_declaration_statement() {
     return s;
 }
 
-Statement *Parser::get_return_statement() {
+Statement* Parser::get_return_statement() {
     std::cout << "get_return_statement\n";
 
     auto keyword_token = expect(TokenType::Keyword);
@@ -137,7 +142,7 @@ Statement *Parser::get_return_statement() {
     return s;
 }
 
-Statement *Parser::get_if_statement() {
+Statement* Parser::get_if_statement() {
     std::cout << "get_if_statement\n";
 
     auto keyword_token = expect(TokenType::Keyword);
@@ -148,7 +153,7 @@ Statement *Parser::get_if_statement() {
     expect(TokenType::RightParen);
 
     auto if_block = get_statement();
-    Statement *else_block = nullptr;
+    Statement* else_block = nullptr;
 
     auto next = peek_next_token();
     if (next.type == TokenType::Keyword && next.value == "else") {
@@ -164,7 +169,7 @@ Statement *Parser::get_if_statement() {
     return s;
 }
 
-Statement *Parser::get_while_statement() {
+Statement* Parser::get_while_statement() {
     std::cout << "get_while_statement\n";
 
     auto keyword_token = expect(TokenType::Keyword);
@@ -182,7 +187,7 @@ Statement *Parser::get_while_statement() {
     return s;
 }
 
-Statement *Parser::get_block_statement() {
+Statement* Parser::get_block_statement() {
     std::cout << "get_block_statement\n";
 
     expect(TokenType::LeftBrace);
@@ -200,7 +205,7 @@ Statement *Parser::get_block_statement() {
     return s;
 }
 
-Expression *Parser::get_function_expression() {
+Expression* Parser::get_function_expression() {
     std::cout << "get_function_expression\n";
 
     auto keyword_token = expect(TokenType::Keyword);
@@ -228,14 +233,14 @@ Expression *Parser::get_function_expression() {
     return fe;
 }
 
-Expression *Parser::get_function_call_expression() {
+Expression* Parser::get_function_call_expression() {
     std::cout << "get_function_call_expression\n";
 
     auto id_token = expect(TokenType::Identifier);
 
     expect(TokenType::LeftParen);
 
-    auto args = std::vector<Expression *>();
+    auto args = std::vector<Expression*>();
 
     while (peek_next_token().type != TokenType::RightParen) {
         args.push_back(get_expression());
@@ -252,7 +257,7 @@ Expression *Parser::get_function_call_expression() {
     return fce;
 };
 
-Expression *Parser::get_assignment_expression() {
+Expression* Parser::get_assignment_expression() {
     std::cout << "get_assignment_expression\n";
 
     auto id_token = expect(TokenType::Identifier);
@@ -265,12 +270,12 @@ Expression *Parser::get_assignment_expression() {
     return ae;
 };
 
-Expression *Parser::get_object_expression() {
+Expression* Parser::get_object_expression() {
     std::cout << "get_object_expression\n";
 
     expect(TokenType::LeftBrace);
 
-    std::unordered_map<std::string, Expression *> props;
+    std::unordered_map<std::string, Expression*> props;
 
     while (peek_next_token().type != TokenType::RightBrace) {
         auto id_token = expect(TokenType::Identifier);
@@ -290,12 +295,12 @@ Expression *Parser::get_object_expression() {
     return oe;
 };
 
-Expression *Parser::get_array_expression() {
+Expression* Parser::get_array_expression() {
     std::cout << "get_array_expression\n";
 
     expect(TokenType::LeftBracket);
 
-    std::vector<Expression *> elements;
+    std::vector<Expression*> elements;
 
     while (peek_next_token().type != TokenType::RightBracket) {
         elements.push_back(get_expression());
@@ -311,7 +316,7 @@ Expression *Parser::get_array_expression() {
     return e;
 };
 
-Expression *Parser::get_member_expression() {
+Expression* Parser::get_member_expression() {
     std::cout << "get_member_expression\n";
 
     auto object_id_token = expect(TokenType::Identifier);
@@ -327,12 +332,12 @@ Expression *Parser::get_member_expression() {
     return me;
 };
 
-Expression *Parser::get_expression() {
+Expression* Parser::get_expression() {
     std::cout << "get_expression\n";
 
     auto t = next_token();
 
-    Expression *left;
+    Expression* left;
 
     switch (t.type) {
         case TokenType::Identifier: {
@@ -396,7 +401,8 @@ Expression *Parser::get_expression() {
             left = sle;
             break;
         }
-        default:UNEXPECTED_TOKEN(t);
+        default:
+        UNEXPECTED_TOKEN(t);
     }
 
     auto next = peek_next_token();
@@ -420,7 +426,7 @@ Expression *Parser::get_expression() {
     return b;
 }
 
-Statement *Parser::get_statement() {
+Statement* Parser::get_statement() {
     auto t = next_token();
     std::cout << "get_statement: t = " << t.type << "\n";
 
@@ -462,14 +468,15 @@ Statement *Parser::get_statement() {
             backup();
             return get_block_statement();
         }
-        default:UNEXPECTED_TOKEN(t);
+        default:
+        UNEXPECTED_TOKEN(t);
     }
 };
 
-std::vector<Statement *> Parser::get_statements() {
+std::vector<Statement*> Parser::get_statements() {
     std::cout << "get_statements\n";
 
-    std::vector<Statement *> statements;
+    std::vector<Statement*> statements;
 
     auto next_token = peek_next_token();
 

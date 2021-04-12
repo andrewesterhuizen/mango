@@ -11,7 +11,7 @@ CallStack::CallStack() {
     // will become more clear when modules are implemented
     auto print = new Function();
     print->is_builtin = true;
-    print->builtin_fn = [](std::vector<Object *> args) -> Object * {
+    print->builtin_fn = [](std::vector<Object*> args) -> Object* {
         std::cout << args[0]->to_string() << "\n";
         return new Undefined();
     };
@@ -28,12 +28,12 @@ void CallStack::pop_frame() {
     current--;
 }
 
-Object *CallStack::set_variable(std::string id, Object *v) {
+Object* CallStack::set_variable(std::string id, Object* v) {
     frames.at(current).variables[id] = v;
     return v;
 }
 
-Object *CallStack::lookup_variable(std::string id) {
+Object* CallStack::lookup_variable(std::string id) {
     for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
         auto vars = it->variables;
         if (auto var = vars.find(id); var != vars.end()) {

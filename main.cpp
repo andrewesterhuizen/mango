@@ -10,7 +10,7 @@ int main() {
                       "var i = 0;"
                       "while(i < 5) {"
                       "print(a[i]);"
-                      "i = i+1;"
+                      "i = i + 1;"
                       "};";
 
     mango::Lexer lexer;
@@ -29,7 +29,7 @@ int main() {
 
     mango::Interpreter interpreter;
     auto out = interpreter.run(ast);
-    std::cout << out << "\n";
+    std::cout << *out << "\n";
 
     return 0;
 }

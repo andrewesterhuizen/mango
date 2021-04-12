@@ -20,44 +20,25 @@ class Parser {
     std::vector<Token> tokens;
 
     Token current_token();
-
     Token next_token();
-
     Token peek_next_token();
-
     void backup();
-
     Token expect(TokenType type);
-
     Operator get_operator();
-
-    Statement *get_block_statement();
-
-    Statement *get_declaration_statement();
-
-    Statement *get_return_statement();
-
-    Statement *get_if_statement();
-
-    Statement *get_while_statement();
-
-    Expression *get_assignment_expression();
-
-    Expression *get_member_expression();
-
-    Expression *get_object_expression();
-
-    Expression *get_array_expression();
-
-    Expression *get_function_expression();
-
-    Expression *get_function_call_expression();
-
-    Expression *get_expression();
-
-    Statement *get_statement();
-
-    std::vector<Statement *> get_statements();
+    Statement* get_block_statement();
+    Statement* get_declaration_statement();
+    Statement* get_return_statement();
+    Statement* get_if_statement();
+    Statement* get_while_statement();
+    Expression* get_assignment_expression();
+    Expression* get_member_expression();
+    Expression* get_object_expression();
+    Expression* get_array_expression();
+    Expression* get_function_expression();
+    Expression* get_function_call_expression();
+    Expression* get_expression();
+    Statement* get_statement();
+    std::vector<Statement*> get_statements();
 
 public:
     Program parse(std::vector<Token> tokens);

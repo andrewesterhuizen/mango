@@ -66,77 +66,77 @@ struct StringLiteralExpression : public Expression {
 };
 
 struct BlockStatement : public Statement {
-    std::vector<Statement *> statements;
+    std::vector<Statement*> statements;
 };
 
 struct FunctionExpression : public Expression {
     DataType return_type;
     std::vector<std::string> parameters;
-    Statement *body;
+    Statement* body;
 };
 
 struct ObjectExpression : public Expression {
-    std::unordered_map<std::string, Expression *> properties;
+    std::unordered_map<std::string, Expression*> properties;
 };
 
 struct ArrayExpression : public Expression {
-    std::vector<Expression *> elements;
+    std::vector<Expression*> elements;
 };
 
 struct MemberExpression : public Expression {
     std::string identifier;
-    Expression *property;
+    Expression* property;
 };
 
 struct FunctionCallExpression : public Expression {
     std::string value;
-    std::vector<Expression *> arguments;
+    std::vector<Expression*> arguments;
 };
 
 struct BinaryExpression : public Expression {
     Operator op;
-    Expression *left;
-    Expression *right;
+    Expression* left;
+    Expression* right;
 };
 
 struct DeclarationStatement : public Statement {
     DataType type;
     std::string identifier;
-    Expression *value;
+    Expression* value;
 };
 
 struct ReturnStatement : public Statement {
-    Expression *value;
+    Expression* value;
 };
 
 struct IfStatement : public Statement {
-    Expression *condition;
-    Statement *if_block;
-    Statement *else_block;
+    Expression* condition;
+    Statement* if_block;
+    Statement* else_block;
 };
 
 struct WhileStatement : public Statement {
-    Expression *condition;
-    Statement *body;
+    Expression* condition;
+    Statement* body;
 };
 
 struct AssignmentExpression : public Expression {
-    Expression *left;
-    Expression *right;
+    Expression* left;
+    Expression* right;
 };
 
 struct ExpressionStatement : public Statement {
-    Expression *value;
+    Expression* value;
 };
 
 class Program {
 public:
-    std::vector<Statement *> statements;
+    std::vector<Statement*> statements;
 };
 
-void statement_to_string(string_builder::StringBuilder *sb, Statement *statement);
+void statement_to_string(string_builder::StringBuilder* sb, Statement* statement);
 
-void expression_to_string(string_builder::StringBuilder *sb, Expression *expression);
+void expression_to_string(string_builder::StringBuilder* sb, Expression* expression);
 
 std::string ast_to_string(Program ast);
 
