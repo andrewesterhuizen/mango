@@ -1,35 +1,35 @@
 #pragma once
 
 #include "../ast.h"
-#include "value.h"
-#include "scope.h"
+#include "types.h"
+#include "call_stack.h"
 
 namespace mango {
 
 class Interpreter {
-    ScopeStack scope_stack;
+    CallStack call_stack;
 
-    Value execute_binary_expression(BinaryExpression *e);
-    Value execute_identifier_expression(IdentifierExpression *e);
-    Value execute_integer_literal_expression(IntegerLiteralExpression *e);
-    Value execute_string_literal_expression(StringLiteralExpression *e);
-    Value execute_object_expression(ObjectExpression *e);
-    Value execute_array_expression(ArrayExpression *e);
-    Value execute_function_expression(FunctionExpression *e);
-    Value execute_function_call_expression(FunctionCallExpression *e);
-    Value execute_member_expression(MemberExpression *expression);
-    Value execute_assignment_expression(AssignmentExpression *e);
-    Value execute_expression(Expression *expression);
-    Value execute_declaration_statement(DeclarationStatement *s);
-    Value execute_expression_statement(ExpressionStatement *s);
-    Value execute_block_statement(BlockStatement *bs);
-    Value execute_return_statement(ReturnStatement *s);
-    Value execute_if_statement(IfStatement *s);
-    Value execute_while_statement(WhileStatement *s);
-    Value execute_statement(Statement *statement);
+    Object* execute_binary_expression(BinaryExpression* e);
+    Object* execute_identifier_expression(IdentifierExpression* e);
+    Object* execute_integer_literal_expression(IntegerLiteralExpression* e);
+    Object* execute_string_literal_expression(StringLiteralExpression* e);
+    Object* execute_object_expression(ObjectExpression* e);
+    Object* execute_array_expression(ArrayExpression* e);
+    Object* execute_function_expression(FunctionExpression* e);
+    Object* execute_function_call_expression(FunctionCallExpression* e);
+    Object* execute_member_expression(MemberExpression* expression);
+    Object* execute_assignment_expression(AssignmentExpression* e);
+    Object* execute_expression(Expression* expression);
+    Object* execute_declaration_statement(DeclarationStatement* s);
+    Object* execute_expression_statement(ExpressionStatement* s);
+    Object* execute_block_statement(BlockStatement* bs);
+    Object* execute_return_statement(ReturnStatement* s);
+    Object* execute_if_statement(IfStatement* s);
+    Object* execute_while_statement(WhileStatement* s);
+    Object* execute_statement(Statement* statement);
 
 public:
-    Value run(Program ast);
+    Object* run(Program ast);
 };
 
 }
