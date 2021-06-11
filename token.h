@@ -28,6 +28,7 @@ enum class TokenType {
     RightAngleBracket,
     LeftBracket,
     RightBracket,
+    NewLine,
     EndOfFile
 };
 

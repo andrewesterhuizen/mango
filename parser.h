@@ -24,6 +24,7 @@ class Parser {
     Token peek_next_token();
     void backup();
     Token expect(TokenType type);
+    void expect_optional(TokenType type);
     Operator get_operator();
     Statement* get_block_statement();
     Statement* get_declaration_statement();

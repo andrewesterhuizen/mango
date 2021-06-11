@@ -50,6 +50,8 @@ std::string token_type_to_string(TokenType t) {
             return "Asterisk";
         case TokenType::Slash:
             return "Slash";
+        case TokenType::NewLine:
+            return "NewLine";
         case TokenType::EndOfFile:
             return "EndOfFile";
     }
