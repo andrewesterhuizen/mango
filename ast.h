@@ -274,7 +274,7 @@ struct AssignmentExpression : public Expression {
 struct BlockStatement : public Statement {
     BlockStatement() : Statement(StatementType::Block) {};
     std::vector<Statement*> statements;
-    
+
     void print(string_builder::StringBuilder* sb) override {
         sb->append_line("BlockStatement {");
         sb->increase_indent();
@@ -390,8 +390,27 @@ struct ExpressionStatement : public Statement {
 class Program {
 public:
     std::vector<Statement*> statements;
-};
+    std::string print() {
+        string_builder::StringBuilder sb;
 
-std::string ast_to_string(Program ast);
+        sb.append_line("Program {");
+        sb.increase_indent();
+
+        sb.append_line("statements: [");
+        sb.increase_indent();
+
+        for (auto s : statements) {
+            s->print(&sb);
+        }
+
+        sb.decrease_indent();
+        sb.append_line("]");
+
+        sb.decrease_indent();
+        sb.append_line("}");
+
+        return sb.get_string();
+    }
+};
 
 }

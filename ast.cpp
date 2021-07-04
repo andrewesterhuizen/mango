@@ -32,28 +32,6 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     return os;
 }
 
-std::string ast_to_string(Program ast) {
-    string_builder::StringBuilder sb;
-
-    sb.append_line("Program {");
-    sb.increase_indent();
-
-    sb.append_line("statements: [");
-    sb.increase_indent();
-
-    for (auto s : ast.statements) {
-        s->print(&sb);
-    }
-
-    sb.decrease_indent();
-    sb.append_line("]");
-
-    sb.decrease_indent();
-    sb.append_line("}");
-
-    return sb.get_string();
-}
-
 auto data_type_string_lookup = std::unordered_map<DataType, std::string>{
         {DataType::Undefined, "undefined"},
         {DataType::String,    "string"},
