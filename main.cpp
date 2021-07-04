@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include "ast.h"
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter/interpreter.h"
@@ -15,12 +16,16 @@ mango::Program compile(std::string src) {
 
 class Repl {
 public:
-    void start() {
+    int start() {
         std::string line;
         mango::Interpreter interpreter;
 
         while (1) {
             std::getline(std::cin, line);
+            if (line == "exit") {
+                return 0;
+            }
+
             auto ast = compile(line);
             auto out = interpreter.run(ast);
             std::cout << *out << "\n";
@@ -29,10 +34,10 @@ public:
 };
 
 int main() {
-    std::string src = "var x = { prop: 123 }; print(x.prop);";
+    std::string src = "var x = 1; x = x + 2;";
 
-//    Repl repl;
-//    repl.start();
+    Repl repl;
+    return repl.start();
 
     return 0;
 }
