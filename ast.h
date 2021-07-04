@@ -63,56 +63,89 @@ struct Statement {
     }
 };
 
+enum class ExpressionType {
+    Undefined,
+    Identifier,
+    IntegerLiteral,
+    StringLiteral,
+    Function,
+    Object,
+    Array,
+    Member,
+    FunctionCall,
+    Binary,
+    Assignment,
+};
+
 struct Expression {
+    ExpressionType m_type;
+    Expression() = delete;
+    Expression(ExpressionType type) {
+        m_type = type;
+    }
     virtual ~Expression() = default;
+    ExpressionType type() {
+        return m_type;
+    }
 };
 
 struct UndefinedExpression : public Expression {
+    UndefinedExpression() : Expression(ExpressionType::Undefined) {};
 };
 
 struct IdentifierExpression : public Expression {
+    IdentifierExpression() : Expression(ExpressionType::Identifier) {};
     std::string value;
 };
 
 struct IntegerLiteralExpression : public Expression {
+    IntegerLiteralExpression() : Expression(ExpressionType::IntegerLiteral) {};
     int value;
 };
 
 struct StringLiteralExpression : public Expression {
+    StringLiteralExpression() : Expression(ExpressionType::StringLiteral) {};
     std::string value;
 };
 
 struct FunctionExpression : public Expression {
+    FunctionExpression() : Expression(ExpressionType::Function) {};
     DataType return_type;
     std::vector<std::string> parameters;
     Statement* body;
 };
 
 struct ObjectExpression : public Expression {
+    ObjectExpression() : Expression(ExpressionType::Object) {};
     std::unordered_map<std::string, Expression*> properties;
 };
 
 struct ArrayExpression : public Expression {
+    ArrayExpression() : Expression(ExpressionType::Array) {};
     std::vector<Expression*> elements;
 };
 
 struct MemberExpression : public Expression {
+    MemberExpression() : Expression(ExpressionType::Member) {};
     std::string identifier;
     Expression* property;
 };
 
 struct FunctionCallExpression : public Expression {
+    FunctionCallExpression() : Expression(ExpressionType::FunctionCall) {};
     std::string value;
     std::vector<Expression*> arguments;
 };
 
 struct BinaryExpression : public Expression {
+    BinaryExpression() : Expression(ExpressionType::Binary) {};
     Operator op;
     Expression* left;
     Expression* right;
 };
 
 struct AssignmentExpression : public Expression {
+    AssignmentExpression() : Expression(ExpressionType::Assignment) {};
     Expression* left;
     Expression* right;
 };

@@ -272,30 +272,33 @@ Object* Interpreter::execute_function_call_expression(FunctionCallExpression* e)
 }
 
 Object* Interpreter::execute_expression(Expression* expression) {
-    if (auto e = dynamic_cast<IdentifierExpression*>(expression)) {
-        return execute_identifier_expression(e);
-    } else if (auto e = dynamic_cast<BinaryExpression*>(expression)) {
-        return execute_binary_expression(e);
-    } else if (auto e = dynamic_cast<IntegerLiteralExpression*>(expression)) {
-        return execute_integer_literal_expression(e);
-    } else if (auto e = dynamic_cast<StringLiteralExpression*>(expression)) {
-        return execute_string_literal_expression(e);
-    } else if (auto e = dynamic_cast<FunctionExpression*>(expression)) {
-        return execute_function_expression(e);
-    } else if (auto e = dynamic_cast<FunctionCallExpression*>(expression)) {
-        return execute_function_call_expression(e);
-    } else if (auto e = dynamic_cast<ObjectExpression*>(expression)) {
-        return execute_object_expression(e);
-    } else if (auto e = dynamic_cast<ArrayExpression*>(expression)) {
-        return execute_array_expression(e);
-    } else if (auto e = dynamic_cast<MemberExpression*>(expression)) {
-        return execute_member_expression(e);
-    } else if (auto e = dynamic_cast<AssignmentExpression*>(expression)) {
-        return execute_assignment_expression(e);
-    } else {
-        std::cerr << "unknown expression type\n";
-        assert(false);
+    switch (expression->type()) {
+        case ExpressionType::Identifier:
+            return execute_identifier_expression(static_cast<IdentifierExpression*>(expression));
+        case ExpressionType::Binary:
+            return execute_binary_expression(static_cast<BinaryExpression*>(expression));
+        case ExpressionType::IntegerLiteral:
+            return execute_integer_literal_expression(static_cast<IntegerLiteralExpression*>(expression));
+        case ExpressionType::StringLiteral:
+            return execute_string_literal_expression(static_cast<StringLiteralExpression*>(expression));
+        case ExpressionType::Function:
+            return execute_function_expression(static_cast<FunctionExpression*>(expression));
+        case ExpressionType::FunctionCall:
+            return execute_function_call_expression(static_cast<FunctionCallExpression*>(expression));
+        case ExpressionType::Object:
+            return execute_object_expression(static_cast<ObjectExpression*>(expression));
+        case ExpressionType::Array:
+            return execute_array_expression(static_cast<ArrayExpression*>(expression));
+        case ExpressionType::Member:
+            return execute_member_expression(static_cast<MemberExpression*>(expression));
+        case ExpressionType::Assignment:
+            return execute_assignment_expression(static_cast<AssignmentExpression*>(expression));
+        case ExpressionType::Undefined:
+            return new Undefined();
     }
+
+    std::cerr << "unknown expression type\n";
+    assert(false);
 }
 
 Object* Interpreter::execute_declaration_statement(DeclarationStatement* s) {
