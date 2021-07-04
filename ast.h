@@ -61,6 +61,7 @@ struct Statement {
     StatementType type() {
         return m_type;
     }
+    virtual void print(string_builder::StringBuilder* sb) = 0;
 };
 
 enum class ExpressionType {
@@ -90,11 +91,9 @@ struct Expression {
     virtual void print(string_builder::StringBuilder* sb) = 0;
 };
 
-void statement_to_string(string_builder::StringBuilder* sb, Statement* statement);
-
 struct UndefinedExpression : public Expression {
     UndefinedExpression() : Expression(ExpressionType::Undefined) {};
-    
+
     void print(string_builder::StringBuilder* sb) override {
         sb->append_line_no_indent("UndefinedExpression {}");
     }
@@ -152,7 +151,7 @@ struct FunctionExpression : public Expression {
         sb->append_line("]");
         // body
         sb->append("value: ");
-        statement_to_string(sb, body);
+        body->print(sb);
         sb->decrease_indent();
         sb->append_line("}");
     }
@@ -275,6 +274,24 @@ struct AssignmentExpression : public Expression {
 struct BlockStatement : public Statement {
     BlockStatement() : Statement(StatementType::Block) {};
     std::vector<Statement*> statements;
+    
+    void print(string_builder::StringBuilder* sb) override {
+        sb->append_line("BlockStatement {");
+        sb->increase_indent();
+        sb->append_line("value: [");
+        sb->increase_indent();
+        if (statements.size() > 0) {
+            for (auto st : statements) {
+                st->print(sb);
+            }
+        } else {
+            sb->append_line("<empty>");
+        }
+        sb->decrease_indent();
+        sb->append_line("]");
+        sb->decrease_indent();
+        sb->append_line("}");
+    }
 };
 
 struct DeclarationStatement : public Statement {
@@ -282,11 +299,35 @@ struct DeclarationStatement : public Statement {
     DataType data_type;
     std::string identifier;
     Expression* value;
+
+    void print(string_builder::StringBuilder* sb) override {
+        sb->append_line("DeclarationStatement {");
+        sb->increase_indent();
+        sb->append("type: ");
+        sb->append_line_no_indent(data_type_to_string(data_type));
+        sb->append("identifier: ");
+        sb->append_line_no_indent(identifier);
+        sb->append("value: ");
+        value->print(sb);
+        sb->append_line_no_indent("");
+        sb->decrease_indent();
+        sb->append_line("}");
+    }
 };
 
 struct ReturnStatement : public Statement {
     ReturnStatement() : Statement(StatementType::Return) {};
     Expression* value;
+
+    void print(string_builder::StringBuilder* sb) override {
+        sb->append_line("ReturnStatement {");
+        sb->increase_indent();
+        sb->append("value: ");
+        value->print(sb);
+        sb->append_line("");
+        sb->decrease_indent();
+        sb->append_line("}");
+    }
 };
 
 struct IfStatement : public Statement {
@@ -294,17 +335,56 @@ struct IfStatement : public Statement {
     Expression* condition;
     Statement* if_block;
     Statement* else_block;
+
+    void print(string_builder::StringBuilder* sb) override {
+        sb->append_line("IfStatement {");
+        sb->increase_indent();
+        sb->append("condition: ");
+        condition->print(sb);
+        sb->append_line("");
+        sb->append("if_block: ");
+        if_block->print(sb);
+        sb->append_line("");
+        sb->append("else_block: ");
+        else_block->print(sb);
+        sb->append_line("");
+        sb->decrease_indent();
+        sb->append_line("}");
+    }
 };
 
 struct WhileStatement : public Statement {
     WhileStatement() : Statement(StatementType::While) {};
     Expression* condition;
     Statement* body;
+
+    void print(string_builder::StringBuilder* sb) override {
+        sb->append_line("WhileStatement {");
+        sb->increase_indent();
+        sb->append("condition: ");
+        condition->print(sb);
+        sb->append_line("");
+        sb->append("body: ");
+        body->print(sb);
+        sb->append_line("");
+        sb->decrease_indent();
+        sb->append_line("}");
+    }
 };
 
 struct ExpressionStatement : public Statement {
     ExpressionStatement() : Statement(StatementType::Expression) {};
     Expression* value;
+
+    void print(string_builder::StringBuilder* sb) override {
+        sb->append_line("ExpressionStatement {");
+        sb->increase_indent();
+        sb->append("value: ");
+        value->print(sb);
+        sb->append_line("");
+        sb->decrease_indent();
+        sb->append_line("}");
+    }
 };
 
 class Program {

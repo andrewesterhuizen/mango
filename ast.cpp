@@ -32,102 +32,6 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     return os;
 }
 
-void statement_to_string(string_builder::StringBuilder* sb, Statement* statement) {
-    auto type = statement->type();
-
-    switch (type) {
-        case StatementType::Declaration: {
-            auto s = static_cast<DeclarationStatement*>(statement);
-            sb->append_line("DeclarationStatement {");
-            sb->increase_indent();
-            sb->append("type: ");
-            sb->append_line_no_indent(data_type_to_string(s->data_type));
-            sb->append("identifier: ");
-            sb->append_line_no_indent(s->identifier);
-            sb->append("value: ");
-            s->value->print(sb);
-            sb->append_line_no_indent("");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case StatementType::Expression: {
-            auto s = static_cast<ExpressionStatement*>(statement);
-            sb->append_line("ExpressionStatement {");
-            sb->increase_indent();
-            sb->append("value: ");
-            s->value->print(sb);
-            sb->append_line("");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case StatementType::Block: {
-            auto s = static_cast<BlockStatement*>(statement);
-            sb->append_line("BlockStatement {");
-            sb->increase_indent();
-            sb->append_line("value: [");
-            sb->increase_indent();
-            if (s->statements.size() > 0) {
-                for (auto st : s->statements) {
-                    statement_to_string(sb, st);
-                }
-            } else {
-                sb->append_line("<empty>");
-            }
-            sb->decrease_indent();
-            sb->append_line("]");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case StatementType::Return: {
-            auto s = static_cast<ReturnStatement*>(statement);
-            sb->append_line("ReturnStatement {");
-            sb->increase_indent();
-            sb->append("value: ");
-            s->value->print(sb);
-            sb->append_line("");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case StatementType::If: {
-            auto s = static_cast<IfStatement*>(statement);
-            sb->append_line("IfStatement {");
-            sb->increase_indent();
-            sb->append("condition: ");
-            s->condition->print(sb);
-            sb->append_line("");
-            sb->append("if_block: ");
-            statement_to_string(sb, s->if_block);
-            sb->append_line("");
-            sb->append("else_block: ");
-            statement_to_string(sb, s->if_block);
-            sb->append_line("");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case StatementType::While: {
-            auto s = static_cast<WhileStatement*>(statement);
-            sb->append_line("WhileStatement {");
-            sb->increase_indent();
-            sb->append("condition: ");
-            s->condition->print(sb);
-            sb->append_line("");
-            sb->append("body: ");
-            statement_to_string(sb, s->body);
-            sb->append_line("");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-    }
-    std::cerr << "unknown statement\n";
-    assert(false);
-}
-
 std::string ast_to_string(Program ast) {
     string_builder::StringBuilder sb;
 
@@ -138,7 +42,7 @@ std::string ast_to_string(Program ast) {
     sb.increase_indent();
 
     for (auto s : ast.statements) {
-        statement_to_string(&sb, s);
+        s->print(&sb);
     }
 
     sb.decrease_indent();
