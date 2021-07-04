@@ -120,7 +120,7 @@ Statement* Parser::get_declaration_statement() {
 
     auto s = new DeclarationStatement;
     // TODO: check expressions for type
-    s->type = DataType::Integer;
+    s->data_type = DataType::Integer;
     s->identifier = id_token.value;
     s->value = value;
 

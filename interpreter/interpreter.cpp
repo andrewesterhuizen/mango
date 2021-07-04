@@ -340,22 +340,24 @@ Object* Interpreter::execute_while_statement(WhileStatement* s) {
 }
 
 Object* Interpreter::execute_statement(Statement* statement) {
-    if (auto s = dynamic_cast<DeclarationStatement*>(statement)) {
-        return execute_declaration_statement(s);
-    } else if (auto s = dynamic_cast<ExpressionStatement*>(statement)) {
-        return execute_expression_statement(s);
-    } else if (auto s = dynamic_cast<BlockStatement*>(statement)) {
-        return execute_block_statement(s);
-    } else if (auto s = dynamic_cast<ReturnStatement*>(statement)) {
-        return execute_return_statement(s);
-    } else if (auto s = dynamic_cast<IfStatement*>(statement)) {
-        return execute_if_statement(s);
-    } else if (auto s = dynamic_cast<WhileStatement*>(statement)) {
-        return execute_while_statement(s);
-    } else {
-        std::cerr << "unknown statement type\n";
-        assert(false);
+    switch (statement->type()) {
+        case StatementType::Declaration:
+            return execute_declaration_statement(static_cast<DeclarationStatement*>(statement));
+        case StatementType::Expression:
+            return execute_expression_statement(static_cast<ExpressionStatement*>(statement));
+        case StatementType::Block:
+            return execute_block_statement(static_cast<BlockStatement*>(statement));
+        case StatementType::Return:
+            return execute_return_statement(static_cast<ReturnStatement*>(statement));
+        case StatementType::If:
+            return execute_if_statement(static_cast<IfStatement*>(statement));
+        case StatementType::While:
+            return execute_while_statement(static_cast<WhileStatement*>(statement));
+
     }
+
+    std::cerr << "unknown statement type\n";
+    assert(false);
 }
 
 Object* Interpreter::run(Program ast) {

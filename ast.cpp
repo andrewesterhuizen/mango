@@ -155,108 +155,99 @@ void expression_to_string(string_builder::StringBuilder* sb, Expression* express
 }
 
 void statement_to_string(string_builder::StringBuilder* sb, Statement* statement) {
-    if (auto s = dynamic_cast<DeclarationStatement*>(statement)) {
-        sb->append_line("DeclarationStatement {");
+    auto type = statement->type();
 
-        sb->increase_indent();
-
-        sb->append("type: ");
-        sb->append_line_no_indent(data_type_to_string(s->type));
-
-        sb->append("identifier: ");
-        sb->append_line_no_indent(s->identifier);
-
-        sb->append("value: ");
-        expression_to_string(sb, s->value);
-        sb->append_line_no_indent("");
-
-        sb->decrease_indent();
-
-        sb->append_line("}");
-    } else if (auto s = dynamic_cast<ExpressionStatement*>(statement)) {
-        sb->append_line("ExpressionStatement {");
-
-        sb->increase_indent();
-
-        sb->append("value: ");
-        expression_to_string(sb, s->value);
-        sb->append_line("");
-
-        sb->decrease_indent();
-
-        sb->append_line("}");
-    } else if (auto s = dynamic_cast<BlockStatement*>(statement)) {
-        sb->append_line("BlockStatement {");
-        sb->increase_indent();
-
-        sb->append_line("value: [");
-        sb->increase_indent();
-
-        if (s->statements.size() > 0) {
-            for (auto st : s->statements) {
-                statement_to_string(sb, st);
-            }
-        } else {
-            sb->append_line("<empty>");
+    switch (type) {
+        case StatementType::Declaration: {
+            auto s = static_cast<DeclarationStatement*>(statement);
+            sb->append_line("DeclarationStatement {");
+            sb->increase_indent();
+            sb->append("type: ");
+            sb->append_line_no_indent(data_type_to_string(s->data_type));
+            sb->append("identifier: ");
+            sb->append_line_no_indent(s->identifier);
+            sb->append("value: ");
+            expression_to_string(sb, s->value);
+            sb->append_line_no_indent("");
+            sb->decrease_indent();
+            sb->append_line("}");
+            break;
         }
-
-        sb->decrease_indent();
-        sb->append_line("]");
-
-        sb->decrease_indent();
-
-        sb->append_line("}");
-    } else if (auto s = dynamic_cast<ReturnStatement*>(statement)) {
-        sb->append_line("ReturnStatement {");
-
-        sb->increase_indent();
-
-        sb->append("value: ");
-        expression_to_string(sb, s->value);
-        sb->append_line("");
-
-        sb->decrease_indent();
-
-        sb->append_line("}");
-    } else if (auto s = dynamic_cast<IfStatement*>(statement)) {
-        sb->append_line("IfStatement {");
-
-        sb->increase_indent();
-
-        sb->append("condition: ");
-        expression_to_string(sb, s->condition);
-        sb->append_line("");
-
-        sb->append("if_block: ");
-        statement_to_string(sb, s->if_block);
-        sb->append_line("");
-
-        sb->append("else_block: ");
-        statement_to_string(sb, s->if_block);
-        sb->append_line("");
-
-        sb->decrease_indent();
-
-        sb->append_line("}");
-    } else if (auto s = dynamic_cast<WhileStatement*>(statement)) {
-        sb->append_line("WhileStatement {");
-
-        sb->increase_indent();
-
-        sb->append("condition: ");
-        expression_to_string(sb, s->condition);
-        sb->append_line("");
-
-        sb->append("body: ");
-        statement_to_string(sb, s->body);
-        sb->append_line("");
-
-        sb->decrease_indent();
-
-        sb->append_line("}");
-    } else {
-        assert(false);
+        case StatementType::Expression: {
+            auto s = static_cast<ExpressionStatement*>(statement);
+            sb->append_line("ExpressionStatement {");
+            sb->increase_indent();
+            sb->append("value: ");
+            expression_to_string(sb, s->value);
+            sb->append_line("");
+            sb->decrease_indent();
+            sb->append_line("}");
+            break;
+        }
+        case StatementType::Block: {
+            auto s = static_cast<BlockStatement*>(statement);
+            sb->append_line("BlockStatement {");
+            sb->increase_indent();
+            sb->append_line("value: [");
+            sb->increase_indent();
+            if (s->statements.size() > 0) {
+                for (auto st : s->statements) {
+                    statement_to_string(sb, st);
+                }
+            } else {
+                sb->append_line("<empty>");
+            }
+            sb->decrease_indent();
+            sb->append_line("]");
+            sb->decrease_indent();
+            sb->append_line("}");
+            break;
+        }
+        case StatementType::Return: {
+            auto s = static_cast<ReturnStatement*>(statement);
+            sb->append_line("ReturnStatement {");
+            sb->increase_indent();
+            sb->append("value: ");
+            expression_to_string(sb, s->value);
+            sb->append_line("");
+            sb->decrease_indent();
+            sb->append_line("}");
+            break;
+        }
+        case StatementType::If: {
+            auto s = static_cast<IfStatement*>(statement);
+            sb->append_line("IfStatement {");
+            sb->increase_indent();
+            sb->append("condition: ");
+            expression_to_string(sb, s->condition);
+            sb->append_line("");
+            sb->append("if_block: ");
+            statement_to_string(sb, s->if_block);
+            sb->append_line("");
+            sb->append("else_block: ");
+            statement_to_string(sb, s->if_block);
+            sb->append_line("");
+            sb->decrease_indent();
+            sb->append_line("}");
+            break;
+        }
+        case StatementType::While: {
+            auto s = static_cast<WhileStatement*>(statement);
+            sb->append_line("WhileStatement {");
+            sb->increase_indent();
+            sb->append("condition: ");
+            expression_to_string(sb, s->condition);
+            sb->append_line("");
+            sb->append("body: ");
+            statement_to_string(sb, s->body);
+            sb->append_line("");
+            sb->decrease_indent();
+            sb->append_line("}");
+            break;
+        }
     }
+
+    assert(false);
 }
 
 std::string ast_to_string(Program ast) {
