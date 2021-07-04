@@ -32,141 +32,6 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     return os;
 }
 
-void expression_to_string(string_builder::StringBuilder* sb, Expression* expression) {
-    auto type = expression->type();
-    switch (type) {
-        case ExpressionType::IntegerLiteral: {
-            auto e = static_cast<IntegerLiteralExpression*>(expression);
-            sb->append_no_indent("IntegerLiteralExpression { value: ");
-            sb->append_no_indent(std::to_string(e->value));
-            sb->append_no_indent(" }");
-            break;
-        }
-        case ExpressionType::StringLiteral: {
-            auto e = static_cast<StringLiteralExpression*>(expression);
-            sb->append_no_indent("StringLiteralExpression { value: ");
-            sb->append_no_indent(e->value);
-            sb->append_no_indent(" }");
-            break;
-        }
-        case ExpressionType::Identifier: {
-            auto e = static_cast<IdentifierExpression*>(expression);
-            sb->append_no_indent("IdentifierExpression { value: ");
-            sb->append_no_indent(e->value);
-            sb->append_no_indent(" }");
-            break;
-        }
-        case ExpressionType::Member: {
-            auto e = static_cast<MemberExpression*>(expression);
-            sb->append_line_no_indent("MemberExpression {");
-            sb->increase_indent();
-            sb->append("object: ");
-            sb->append_line_no_indent(e->identifier);
-            sb->append("property: ");
-            expression_to_string(sb, e->property);
-            sb->decrease_indent();
-            sb->append_no_indent(" }");
-            break;
-        }
-        case ExpressionType::Binary: {
-            auto e = static_cast<BinaryExpression*>(expression);
-            sb->append_line_no_indent("BinaryExpression {");
-            sb->increase_indent();
-            sb->append("operator: ");
-            sb->append_line_no_indent(operator_to_string(e->op));
-            sb->append("left: ");
-            expression_to_string(sb, e->left);
-            sb->append_line("");
-            sb->append("right: ");
-            expression_to_string(sb, e->right);
-            sb->append_line("");
-            sb->decrease_indent();
-            sb->append("}");
-            break;
-        }
-        case ExpressionType::Assignment: {
-            auto e = static_cast<AssignmentExpression*>(expression);
-            sb->append_line_no_indent("AssignmentExpression {");
-            sb->increase_indent();
-            sb->append("left: ");
-            expression_to_string(sb, e->left);
-            sb->append_line("");
-            sb->append("right: ");
-            expression_to_string(sb, e->right);
-            sb->append_line("");
-            sb->decrease_indent();
-            sb->append("}");
-            break;
-        }
-        case ExpressionType::Function: {
-            auto e = static_cast<FunctionExpression*>(expression);
-            sb->append_line_no_indent("FunctionExpression {");
-            // params
-            sb->increase_indent();
-            sb->append_line("parameters: [");
-            sb->increase_indent();
-            for (auto p : e->parameters) {
-                sb->append_line(p);
-            }
-            sb->decrease_indent();
-            sb->append_line("]");
-            // body
-            sb->append("value: ");
-            statement_to_string(sb, e->body);
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case ExpressionType::FunctionCall: {
-            auto e = static_cast<FunctionCallExpression*>(expression);
-            sb->append_line_no_indent("FunctionCallExpression {");
-            sb->increase_indent();
-            sb->append("value: ");
-            sb->append_line_no_indent(e->value);
-            sb->append_line("arguments: [");
-            sb->increase_indent();
-            for (auto a : e->arguments) {
-                sb->append("");
-                expression_to_string(sb, a);
-                sb->append_line("");
-            }
-            sb->decrease_indent();
-            sb->append_line("");
-            sb->append_line("]");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case ExpressionType::Object: {
-            sb->append_line_no_indent("ObjectExpression {");
-            sb->append_line("}");
-            break;
-        }
-        case ExpressionType::Array: {
-            auto e = static_cast<ArrayExpression*>(expression);
-            sb->append_line_no_indent("ArrayExpression {");
-            sb->append_line("elements: [");
-            sb->increase_indent();
-            for (auto a : e->elements) {
-                sb->append("");
-                expression_to_string(sb, a);
-                sb->append_line("");
-            }
-            sb->decrease_indent();
-            sb->append_line("");
-            sb->append_line("]");
-            sb->decrease_indent();
-            sb->append_line("}");
-            break;
-        }
-        case ExpressionType::Undefined: {
-            sb->append_line_no_indent("UndefinedExpression {}");
-        }
-    }
-    std::cerr << "unknown expression\n";
-    assert(false);
-}
-
 void statement_to_string(string_builder::StringBuilder* sb, Statement* statement) {
     auto type = statement->type();
 
@@ -180,7 +45,7 @@ void statement_to_string(string_builder::StringBuilder* sb, Statement* statement
             sb->append("identifier: ");
             sb->append_line_no_indent(s->identifier);
             sb->append("value: ");
-            expression_to_string(sb, s->value);
+            s->value->print(sb);
             sb->append_line_no_indent("");
             sb->decrease_indent();
             sb->append_line("}");
@@ -191,7 +56,7 @@ void statement_to_string(string_builder::StringBuilder* sb, Statement* statement
             sb->append_line("ExpressionStatement {");
             sb->increase_indent();
             sb->append("value: ");
-            expression_to_string(sb, s->value);
+            s->value->print(sb);
             sb->append_line("");
             sb->decrease_indent();
             sb->append_line("}");
@@ -221,7 +86,7 @@ void statement_to_string(string_builder::StringBuilder* sb, Statement* statement
             sb->append_line("ReturnStatement {");
             sb->increase_indent();
             sb->append("value: ");
-            expression_to_string(sb, s->value);
+            s->value->print(sb);
             sb->append_line("");
             sb->decrease_indent();
             sb->append_line("}");
@@ -232,7 +97,7 @@ void statement_to_string(string_builder::StringBuilder* sb, Statement* statement
             sb->append_line("IfStatement {");
             sb->increase_indent();
             sb->append("condition: ");
-            expression_to_string(sb, s->condition);
+            s->condition->print(sb);
             sb->append_line("");
             sb->append("if_block: ");
             statement_to_string(sb, s->if_block);
@@ -249,7 +114,7 @@ void statement_to_string(string_builder::StringBuilder* sb, Statement* statement
             sb->append_line("WhileStatement {");
             sb->increase_indent();
             sb->append("condition: ");
-            expression_to_string(sb, s->condition);
+            s->condition->print(sb);
             sb->append_line("");
             sb->append("body: ");
             statement_to_string(sb, s->body);
