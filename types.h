@@ -1,14 +1,27 @@
 #pragma once
 
-#include <iostream>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <functional>
-#include <variant>
-
-#include "../ast.h"
+#include <iostream>
 
 namespace mango {
+
+enum class DataType {
+    Undefined,
+    Integer,
+//    Float,
+    String,
+    Bool,
+    Function,
+    Object,
+    Array
+};
+
+
+std::string data_type_to_string(const DataType dt);
+
+std::ostream &operator<<(std::ostream &os, const DataType &dt);
 
 struct Object {
     std::unordered_map<std::string, Object*> properties;
@@ -27,6 +40,15 @@ struct Object {
     virtual DataType type() { return DataType::Object; }
     virtual bool is_truthy() { return true; }
 };
+
+
+struct Undefined : public Object {
+    virtual bool is_truthy() override { return false; }
+    virtual DataType type() override { return DataType::Undefined; }
+    std::string to_string() override { return "undefined"; }
+};
+
+struct Statement;
 
 struct Function : public Object {
     std::vector<std::string> parameters;
@@ -71,12 +93,6 @@ struct Bool : public Object {
     virtual bool is_truthy() override { return value; }
     virtual DataType type() override { return DataType::Bool; }
     virtual std::string to_string() override { return value ? "true" : "false"; }
-};
-
-struct Undefined : public Object {
-    virtual bool is_truthy() override { return false; }
-    virtual DataType type() override { return DataType::Undefined; }
-    std::string to_string() override { return "undefined"; }
 };
 
 std::ostream &operator<<(std::ostream &os, Object &o);

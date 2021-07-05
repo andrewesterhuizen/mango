@@ -11,5 +11,5 @@ add_executable(mango
         ast.cpp
         interpreter/interpreter.cpp
         string_builder.cpp
-        interpreter/types.cpp
+        types.cpp
         interpreter/call_stack.cpp)

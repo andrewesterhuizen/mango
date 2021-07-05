@@ -21,13 +21,14 @@ public:
         mango::Interpreter interpreter;
 
         while (1) {
+            std::cout << ">";
             std::getline(std::cin, line);
             if (line == "exit") {
                 return 0;
             }
 
             auto ast = compile(line);
-            auto out = interpreter.run(ast);
+            auto out = ast.execute(interpreter);
             std::cout << *out << "\n";
         };
     }

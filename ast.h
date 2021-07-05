@@ -5,24 +5,11 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "types.h"
 #include "string_builder.h"
+#include "interpreter/interpreter.h"
 
 namespace mango {
-
-enum class DataType {
-    Undefined,
-    Integer,
-//    Float,
-    String,
-    Bool,
-    Function,
-    Object,
-    Array
-};
-
-std::string data_type_to_string(const DataType dt);
-
-std::ostream &operator<<(std::ostream &os, const DataType &dt);
 
 enum class Operator {
     Plus = 1,
@@ -62,6 +49,7 @@ struct Statement {
         return m_type;
     }
     virtual void print(string_builder::StringBuilder* sb) = 0;
+    virtual Object* execute(Interpreter &interpreter) = 0;
 };
 
 enum class ExpressionType {
@@ -89,6 +77,7 @@ struct Expression {
         return m_type;
     }
     virtual void print(string_builder::StringBuilder* sb) = 0;
+    virtual Object* execute(Interpreter &interpreter) = 0;
 };
 
 struct UndefinedExpression : public Expression {
@@ -96,6 +85,10 @@ struct UndefinedExpression : public Expression {
 
     void print(string_builder::StringBuilder* sb) override {
         sb->append_line_no_indent("UndefinedExpression {}");
+    }
+
+    Object* execute(Interpreter &interpreter) override {
+        return new Undefined();
     }
 };
 
@@ -108,6 +101,10 @@ struct IdentifierExpression : public Expression {
         sb->append_no_indent(value);
         sb->append_no_indent(" }");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        return interpreter.lookup_variable(value);
+    }
 };
 
 struct IntegerLiteralExpression : public Expression {
@@ -119,6 +116,10 @@ struct IntegerLiteralExpression : public Expression {
         sb->append_no_indent(std::to_string(value));
         sb->append_no_indent(" }");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        return new Integer(value);
+    }
 };
 
 struct StringLiteralExpression : public Expression {
@@ -129,6 +130,10 @@ struct StringLiteralExpression : public Expression {
         sb->append_no_indent("StringLiteralExpression { value: ");
         sb->append_no_indent(value);
         sb->append_no_indent(" }");
+    }
+
+    Object* execute(Interpreter &interpreter) override {
+        return new String(value);
     }
 };
 
@@ -155,6 +160,13 @@ struct FunctionExpression : public Expression {
         sb->decrease_indent();
         sb->append_line("}");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        auto obj = new Function();
+        obj->parameters = parameters;
+        obj->body = body;
+        return obj;
+    }
 };
 
 struct ObjectExpression : public Expression {
@@ -164,6 +176,16 @@ struct ObjectExpression : public Expression {
     void print(string_builder::StringBuilder* sb) override {
         sb->append_line_no_indent("ObjectExpression {");
         sb->append_line("}");
+    }
+
+    Object* execute(Interpreter &interpreter) override {
+        auto obj = new Object();
+
+        for (auto prop : properties) {
+            obj->properties[prop.first] = prop.second->execute(interpreter);
+        }
+
+        return obj;
     }
 };
 
@@ -186,6 +208,16 @@ struct ArrayExpression : public Expression {
         sb->decrease_indent();
         sb->append_line("}");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        auto obj = new Array();
+
+        for (auto el : elements) {
+            obj->elements.push_back(el->execute(interpreter));
+        }
+
+        return obj;
+    }
 };
 
 struct MemberExpression : public Expression {
@@ -202,6 +234,52 @@ struct MemberExpression : public Expression {
         property->print(sb);
         sb->decrease_indent();
         sb->append_no_indent(" }");
+    }
+
+    Object* execute(Interpreter &interpreter) override {
+        auto variable = interpreter.lookup_variable(identifier);
+        if (variable->type() == DataType::Undefined) {
+            std::cerr << "reference error: no definition found for identifier \"" << identifier << "\"\n";
+            assert(false);
+        }
+
+        if (auto array = dynamic_cast<Array*>(variable)) {
+            auto property_value = property->execute(interpreter);
+            auto property_integer = dynamic_cast<Integer*>(property_value);
+
+            // TODO: handle built in properties like .size for arrays
+            if (property_integer == nullptr) {
+                std::cerr << "unsupported data type for property lookup\n";
+                assert(false);
+            }
+
+            // element lookup
+            auto index = property_integer->value;
+            if (index >= array->elements.size()) {
+                return new Undefined();
+            }
+
+            return array->elements.at(index);
+        } else {
+            auto property_value = property->execute(interpreter);
+
+            std::string property_string;
+            if (auto str = dynamic_cast<String*>(property)) {
+                property_string = str->value;
+            } else {
+                property_string = property_value->to_string();
+            }
+
+            auto v = variable->properties.find(property_string);
+            if (v == variable->properties.end()) {
+                return new Undefined();
+            }
+
+            return v->second;
+        }
+
+        std::cerr << "unsupported data type for property lookup\n";
+        assert(false);
     }
 };
 
@@ -228,6 +306,43 @@ struct FunctionCallExpression : public Expression {
         sb->decrease_indent();
         sb->append_line("}");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        auto obj = interpreter.lookup_variable(value);
+        if (obj->type() == DataType::Undefined) {
+            std::cerr << "reference error: no definition found for identifier \"" << value << "\"\n";
+            assert(false);
+        }
+
+        auto function = dynamic_cast<Function*>(obj);
+        if (function == nullptr) {
+            std::cerr << "identifier " << value << " is not a function\n";
+            assert(false);
+        }
+
+        if (function->is_builtin) {
+            std::vector<Object*> args;
+
+            for (int i = 0; i < arguments.size(); i++) {
+                args.push_back(arguments[i]->execute(interpreter));
+            }
+
+            return function->builtin_fn(args);
+        } else {
+            interpreter.new_frame(value);
+
+            for (int i = 0; i < arguments.size(); i++) {
+                auto identifier = function->parameters[i];
+                interpreter.set_variable(identifier, arguments[i]->execute(interpreter));
+            }
+
+            auto return_value = function->body->execute(interpreter);
+
+            interpreter.pop_frame();
+
+            return return_value;
+        }
+    }
 };
 
 struct BinaryExpression : public Expression {
@@ -250,6 +365,8 @@ struct BinaryExpression : public Expression {
         sb->decrease_indent();
         sb->append("}");
     }
+
+    Object* execute(Interpreter &interpreter) override;
 };
 
 struct AssignmentExpression : public Expression {
@@ -268,6 +385,31 @@ struct AssignmentExpression : public Expression {
         sb->append_line("");
         sb->decrease_indent();
         sb->append("}");
+    }
+
+    Object* execute(Interpreter &interpreter) override {
+        auto right_value = right->execute(interpreter);
+
+        if (auto e = dynamic_cast<IdentifierExpression*>(left)) {
+            interpreter.set_variable(e->value, right_value);
+            return right_value;
+        } else if (auto e = dynamic_cast<MemberExpression*>(left)) {
+            auto variable = interpreter.lookup_variable(e->identifier);
+            if (variable->type() == DataType::Undefined) {
+                std::cerr << "reference error: no definition found for identifier \"" << e->identifier << "\"\n";
+                assert(false);
+            }
+
+            auto name = e->property->execute(interpreter);
+            auto name_string = dynamic_cast<String*>(name);
+            assert(name_string != nullptr);
+
+            auto v = variable->properties.find(name_string->value);
+            variable->properties[name_string->value] = right_value;
+            return right_value;
+        }
+
+        assert(false);
     }
 };
 
@@ -292,6 +434,16 @@ struct BlockStatement : public Statement {
         sb->decrease_indent();
         sb->append_line("}");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        Object* v;
+
+        for (auto s: statements) {
+            v = s->execute(interpreter);
+        }
+
+        return v;
+    }
 };
 
 struct DeclarationStatement : public Statement {
@@ -313,6 +465,10 @@ struct DeclarationStatement : public Statement {
         sb->decrease_indent();
         sb->append_line("}");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        return interpreter.set_variable(identifier, value->execute(interpreter));
+    }
 };
 
 struct ReturnStatement : public Statement {
@@ -327,6 +483,10 @@ struct ReturnStatement : public Statement {
         sb->append_line("");
         sb->decrease_indent();
         sb->append_line("}");
+    }
+
+    Object* execute(Interpreter &interpreter) override {
+        return value->execute(interpreter);
     }
 };
 
@@ -351,6 +511,17 @@ struct IfStatement : public Statement {
         sb->decrease_indent();
         sb->append_line("}");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        auto condition_value = condition->execute(interpreter);
+        if (condition_value->is_truthy()) {
+            if_block->execute(interpreter);
+        } else if (else_block != nullptr) {
+            else_block->execute(interpreter);
+        }
+
+        return new Undefined();
+    }
 };
 
 struct WhileStatement : public Statement {
@@ -370,6 +541,14 @@ struct WhileStatement : public Statement {
         sb->decrease_indent();
         sb->append_line("}");
     }
+
+    Object* execute(Interpreter &interpreter) override {
+        while (condition->execute(interpreter)->is_truthy()) {
+            body->execute(interpreter);
+        }
+
+        return new Undefined();
+    }
 };
 
 struct ExpressionStatement : public Statement {
@@ -384,6 +563,10 @@ struct ExpressionStatement : public Statement {
         sb->append_line("");
         sb->decrease_indent();
         sb->append_line("}");
+    }
+
+    Object* execute(Interpreter &interpreter) override {
+        return value->execute(interpreter);
     }
 };
 
@@ -410,6 +593,16 @@ public:
         sb.append_line("}");
 
         return sb.get_string();
+    }
+
+    Object* execute(Interpreter& interpreter) {
+        Object* v;
+
+        for (auto s : statements) {
+            v = s->execute(interpreter);
+        }
+
+        return v;
     }
 };
 

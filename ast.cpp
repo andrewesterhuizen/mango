@@ -32,25 +32,129 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     return os;
 }
 
-auto data_type_string_lookup = std::unordered_map<DataType, std::string>{
-        {DataType::Undefined, "undefined"},
-        {DataType::String,    "string"},
-        {DataType::Integer,   "integer"},
-        {DataType::Function,  "function"},
-};
 
-std::string data_type_to_string(const DataType dt) {
-    if (data_type_string_lookup.find(dt) != data_type_string_lookup.end()) {
-        return data_type_string_lookup[dt];
+#define INVALID_BINARY_OPERATION(LEFT, RIGHT, OPERATOR) \
+     std::cerr << "operator " << OPERATOR << " cannot be applied to types " \
+     << LEFT->type() << " and " << RIGHT->type() << "\n"; \
+     assert(false);
+
+#define BINARY_MATHS_OPERATION(TYPE, OPERATOR, LEFT, RIGHT) \
+    if (LEFT->type() == DataType::TYPE) { \
+        auto l = static_cast<TYPE*>(LEFT); \
+        auto r = static_cast<TYPE*>(RIGHT); \
+        return new TYPE(l->value OPERATOR r->value); \
     }
 
-    std::cerr << "no string defined for data type\n";
+#define BINARY_LOGIC_OPERATION(TYPE, OPERATOR, LEFT, RIGHT) \
+    if (LEFT->type() == DataType::TYPE) { \
+        auto l = static_cast<TYPE*>(LEFT); \
+        auto r = static_cast<TYPE*>(RIGHT); \
+        return new Bool(l->value OPERATOR r->value); \
+    }
+
+Object* add(Object* left, Object* right) {
+    BINARY_MATHS_OPERATION(Integer, +, left, right);
+    BINARY_MATHS_OPERATION(String, +, left, right);
+    INVALID_BINARY_OPERATION(left, right, "+")
+}
+
+Object* subract(Object* left, Object* right) {
+    BINARY_MATHS_OPERATION(Integer, -, left, right);
+    INVALID_BINARY_OPERATION(left, right, "-")
+}
+
+Object* multiply(Object* left, Object* right) {
+    BINARY_MATHS_OPERATION(Integer, *, left, right);
+    INVALID_BINARY_OPERATION(left, right, "*")
+}
+
+Object* divide(Object* left, Object* right) {
+    BINARY_MATHS_OPERATION(Integer, /, left, right);
+    INVALID_BINARY_OPERATION(left, right, "/")
+}
+
+Object* equal_to(Object* left, Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, ==, left, right);
+    BINARY_LOGIC_OPERATION(String, ==, left, right);
+    BINARY_LOGIC_OPERATION(Bool, ==, left, right);
+    INVALID_BINARY_OPERATION(left, right, "==")
+}
+
+Object* not_equal_to(Object* left, Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, !=, left, right);
+    BINARY_LOGIC_OPERATION(String, !=, left, right);
+    BINARY_LOGIC_OPERATION(Bool, !=, left, right);
+    INVALID_BINARY_OPERATION(left, right, "!=")
+}
+
+Object* greater_than(Object* left, Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, >, left, right);
+    BINARY_LOGIC_OPERATION(Bool, >, left, right);
+    INVALID_BINARY_OPERATION(left, right, ">")
+}
+
+Object* greater_than_or_equal_to(Object* left, Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, >=, left, right);
+    BINARY_LOGIC_OPERATION(Bool, >=, left, right);
+    INVALID_BINARY_OPERATION(left, right, ">=")
+}
+
+Object* less_than(Object* left, Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, <, left, right);
+    BINARY_LOGIC_OPERATION(Bool, <, left, right);
+    INVALID_BINARY_OPERATION(left, right, "<")
+}
+
+Object* less_than_or_equal_to(Object* left, Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, <=, left, right);
+    BINARY_LOGIC_OPERATION(Bool, <=, left, right);
+    INVALID_BINARY_OPERATION(left, right, "<=")
+}
+
+
+Object* BinaryExpression::execute(Interpreter &interpreter) {
+    auto l = left->execute(interpreter);
+    auto r = right->execute(interpreter);
+
+    // TODO: operator precedence
+
+    // this is a simple solution for now but we can probably allow some
+    // automatic type converting for operations on values of different types
+    if (l->type() != r->type()) {
+        std::cerr << "operator " << op << " cannot be applied to types " << l->type() << " and " << r->type()
+                  << "\n";
+        assert(false);
+    }
+
+    switch (op) {
+        case Operator::Plus:
+            return add(l, r);
+        case Operator::Minus:
+            return subract(l, r);
+        case Operator::Multiply:
+            return multiply(l, r);
+        case Operator::Divide:
+            return divide(l, r);
+        case Operator::EqualTo:
+            return equal_to(l, r);
+        case Operator::NotEqualTo:
+            return not_equal_to(l, r);
+        case Operator::GreaterThan:
+            return greater_than(l, r);
+        case Operator::GreaterThanOrEqualTo:
+            return greater_than_or_equal_to(l, r);
+        case Operator::LessThan:
+            return less_than(l, r);
+        case Operator::LessThanOrEqualTo:
+            return less_than_or_equal_to(l, r);
+        case Operator::Not:
+            std::cerr << "operator \"!\" is not a binary operator\n";
+            assert(false);
+    }
+
+    std::cerr << "unhandled operator " << op << "\n";
     assert(false);
 }
 
-std::ostream &operator<<(std::ostream &os, const DataType &dt) {
-    os << data_type_to_string(dt);
-    return os;
-}
 
 }
