@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "data_type.h"
 #include "types.h"
 #include "string_builder.h"
 #include "interpreter.h"
@@ -49,7 +50,7 @@ struct Statement {
         return m_type;
     }
     virtual void print(string_builder::StringBuilder* sb) = 0;
-    virtual Object* execute(interpreter::Interpreter &interpreter) = 0;
+    virtual interpreter::Object* execute(interpreter::Interpreter &interpreter) = 0;
 };
 
 enum class ExpressionType {
@@ -77,7 +78,7 @@ struct Expression {
         return m_type;
     }
     virtual void print(string_builder::StringBuilder* sb) = 0;
-    virtual Object* execute(interpreter::Interpreter &interpreter) = 0;
+    virtual interpreter::Object* execute(interpreter::Interpreter &interpreter) = 0;
 };
 
 struct UndefinedExpression : public Expression {
@@ -87,8 +88,8 @@ struct UndefinedExpression : public Expression {
         sb->append_line_no_indent("UndefinedExpression {}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
-        return new Undefined();
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
+        return new interpreter::Undefined();
     }
 };
 
@@ -102,7 +103,7 @@ struct IdentifierExpression : public Expression {
         sb->append_no_indent(" }");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         return interpreter.lookup_variable(value);
     }
 };
@@ -117,8 +118,8 @@ struct IntegerLiteralExpression : public Expression {
         sb->append_no_indent(" }");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
-        return new Integer(value);
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
+        return new interpreter::Integer(value);
     }
 };
 
@@ -132,8 +133,8 @@ struct StringLiteralExpression : public Expression {
         sb->append_no_indent(" }");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
-        return new String(value);
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
+        return new interpreter::String(value);
     }
 };
 
@@ -161,8 +162,8 @@ struct FunctionExpression : public Expression {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
-        auto obj = new Function();
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
+        auto obj = new interpreter::Function();
         obj->parameters = parameters;
         obj->body = body;
         return obj;
@@ -178,8 +179,8 @@ struct ObjectExpression : public Expression {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
-        auto obj = new Object();
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
+        auto obj = new interpreter::Object();
 
         for (auto prop : properties) {
             obj->properties[prop.first] = prop.second->execute(interpreter);
@@ -209,8 +210,8 @@ struct ArrayExpression : public Expression {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
-        auto obj = new Array();
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
+        auto obj = new interpreter::Array();
 
         for (auto el : elements) {
             obj->elements.push_back(el->execute(interpreter));
@@ -236,16 +237,16 @@ struct MemberExpression : public Expression {
         sb->append_no_indent(" }");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         auto variable = interpreter.lookup_variable(identifier);
         if (variable->type() == DataType::Undefined) {
             std::cerr << "reference error: no definition found for identifier \"" << identifier << "\"\n";
             assert(false);
         }
 
-        if (auto array = dynamic_cast<Array*>(variable)) {
+        if (auto array = dynamic_cast<interpreter::Array*>(variable)) {
             auto property_value = property->execute(interpreter);
-            auto property_integer = dynamic_cast<Integer*>(property_value);
+            auto property_integer = dynamic_cast<interpreter::Integer*>(property_value);
 
             // TODO: handle built in properties like .size for arrays
             if (property_integer == nullptr) {
@@ -256,7 +257,7 @@ struct MemberExpression : public Expression {
             // element lookup
             auto index = property_integer->value;
             if (index >= array->elements.size()) {
-                return new Undefined();
+                return new interpreter::Undefined();
             }
 
             return array->elements.at(index);
@@ -264,7 +265,7 @@ struct MemberExpression : public Expression {
             auto property_value = property->execute(interpreter);
 
             std::string property_string;
-            if (auto str = dynamic_cast<String*>(property)) {
+            if (auto str = dynamic_cast<interpreter::String*>(property)) {
                 property_string = str->value;
             } else {
                 property_string = property_value->to_string();
@@ -272,7 +273,7 @@ struct MemberExpression : public Expression {
 
             auto v = variable->properties.find(property_string);
             if (v == variable->properties.end()) {
-                return new Undefined();
+                return new interpreter::Undefined();
             }
 
             return v->second;
@@ -307,21 +308,21 @@ struct FunctionCallExpression : public Expression {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         auto obj = interpreter.lookup_variable(value);
         if (obj->type() == DataType::Undefined) {
             std::cerr << "reference error: no definition found for identifier \"" << value << "\"\n";
             assert(false);
         }
 
-        auto function = dynamic_cast<Function*>(obj);
+        auto function = dynamic_cast<interpreter::Function*>(obj);
         if (function == nullptr) {
             std::cerr << "identifier " << value << " is not a function\n";
             assert(false);
         }
 
         if (function->is_builtin) {
-            std::vector<Object*> args;
+            std::vector<interpreter::Object*> args;
 
             for (int i = 0; i < arguments.size(); i++) {
                 args.push_back(arguments[i]->execute(interpreter));
@@ -366,7 +367,7 @@ struct BinaryExpression : public Expression {
         sb->append("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override;
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override;
 };
 
 struct AssignmentExpression : public Expression {
@@ -387,7 +388,7 @@ struct AssignmentExpression : public Expression {
         sb->append("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         auto right_value = right->execute(interpreter);
 
         if (auto e = dynamic_cast<IdentifierExpression*>(left)) {
@@ -401,7 +402,7 @@ struct AssignmentExpression : public Expression {
             }
 
             auto name = e->property->execute(interpreter);
-            auto name_string = dynamic_cast<String*>(name);
+            auto name_string = dynamic_cast<interpreter::String*>(name);
             assert(name_string != nullptr);
 
             auto v = variable->properties.find(name_string->value);
@@ -435,8 +436,8 @@ struct BlockStatement : public Statement {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
-        Object* v;
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
+        interpreter::Object* v;
 
         for (auto s: statements) {
             v = s->execute(interpreter);
@@ -466,7 +467,7 @@ struct DeclarationStatement : public Statement {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         return interpreter.set_variable(identifier, value->execute(interpreter));
     }
 };
@@ -485,7 +486,7 @@ struct ReturnStatement : public Statement {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         return value->execute(interpreter);
     }
 };
@@ -512,7 +513,7 @@ struct IfStatement : public Statement {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         auto condition_value = condition->execute(interpreter);
         if (condition_value->is_truthy()) {
             if_block->execute(interpreter);
@@ -520,7 +521,7 @@ struct IfStatement : public Statement {
             else_block->execute(interpreter);
         }
 
-        return new Undefined();
+        return new interpreter::Undefined();
     }
 };
 
@@ -542,12 +543,12 @@ struct WhileStatement : public Statement {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         while (condition->execute(interpreter)->is_truthy()) {
             body->execute(interpreter);
         }
 
-        return new Undefined();
+        return new interpreter::Undefined();
     }
 };
 
@@ -565,7 +566,7 @@ struct ExpressionStatement : public Statement {
         sb->append_line("}");
     }
 
-    Object* execute(interpreter::Interpreter &interpreter) override {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override {
         return value->execute(interpreter);
     }
 };
@@ -595,8 +596,8 @@ public:
         return sb.get_string();
     }
 
-    Object* execute(interpreter::Interpreter& interpreter) {
-        Object* v;
+    interpreter::Object* execute(interpreter::Interpreter& interpreter) {
+        interpreter::Object* v;
 
         for (auto s : statements) {
             v = s->execute(interpreter);

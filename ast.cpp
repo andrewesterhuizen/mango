@@ -40,79 +40,79 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
 
 #define BINARY_MATHS_OPERATION(TYPE, OPERATOR, LEFT, RIGHT) \
     if (LEFT->type() == DataType::TYPE) { \
-        auto l = static_cast<TYPE*>(LEFT); \
-        auto r = static_cast<TYPE*>(RIGHT); \
-        return new TYPE(l->value OPERATOR r->value); \
+        auto l = static_cast<interpreter::TYPE*>(LEFT); \
+        auto r = static_cast<interpreter::TYPE*>(RIGHT); \
+        return new interpreter::TYPE(l->value OPERATOR r->value); \
     }
 
 #define BINARY_LOGIC_OPERATION(TYPE, OPERATOR, LEFT, RIGHT) \
     if (LEFT->type() == DataType::TYPE) { \
-        auto l = static_cast<TYPE*>(LEFT); \
-        auto r = static_cast<TYPE*>(RIGHT); \
-        return new Bool(l->value OPERATOR r->value); \
+        auto l = static_cast<interpreter::TYPE*>(LEFT); \
+        auto r = static_cast<interpreter::TYPE*>(RIGHT); \
+        return new interpreter::Bool(l->value OPERATOR r->value); \
     }
 
-Object* add(Object* left, Object* right) {
+interpreter::Object* add(interpreter::Object* left, interpreter::Object* right) {
     BINARY_MATHS_OPERATION(Integer, +, left, right);
     BINARY_MATHS_OPERATION(String, +, left, right);
     INVALID_BINARY_OPERATION(left, right, "+")
 }
 
-Object* subract(Object* left, Object* right) {
+interpreter::Object* subract(interpreter::Object* left, interpreter::Object* right) {
     BINARY_MATHS_OPERATION(Integer, -, left, right);
     INVALID_BINARY_OPERATION(left, right, "-")
 }
 
-Object* multiply(Object* left, Object* right) {
+interpreter::Object* multiply(interpreter::Object* left, interpreter::Object* right) {
     BINARY_MATHS_OPERATION(Integer, *, left, right);
     INVALID_BINARY_OPERATION(left, right, "*")
 }
 
-Object* divide(Object* left, Object* right) {
+interpreter::Object* divide(interpreter::Object* left, interpreter::Object* right) {
     BINARY_MATHS_OPERATION(Integer, /, left, right);
     INVALID_BINARY_OPERATION(left, right, "/")
 }
 
-Object* equal_to(Object* left, Object* right) {
+interpreter::Object* equal_to(interpreter::Object* left, interpreter::Object* right) {
     BINARY_LOGIC_OPERATION(Integer, ==, left, right);
     BINARY_LOGIC_OPERATION(String, ==, left, right);
     BINARY_LOGIC_OPERATION(Bool, ==, left, right);
     INVALID_BINARY_OPERATION(left, right, "==")
 }
 
-Object* not_equal_to(Object* left, Object* right) {
+interpreter::Object* not_equal_to(interpreter::Object* left, interpreter::Object* right) {
     BINARY_LOGIC_OPERATION(Integer, !=, left, right);
     BINARY_LOGIC_OPERATION(String, !=, left, right);
     BINARY_LOGIC_OPERATION(Bool, !=, left, right);
     INVALID_BINARY_OPERATION(left, right, "!=")
 }
 
-Object* greater_than(Object* left, Object* right) {
+interpreter::Object* greater_than(interpreter::Object* left, interpreter::Object* right) {
     BINARY_LOGIC_OPERATION(Integer, >, left, right);
     BINARY_LOGIC_OPERATION(Bool, >, left, right);
     INVALID_BINARY_OPERATION(left, right, ">")
 }
 
-Object* greater_than_or_equal_to(Object* left, Object* right) {
+interpreter::Object* greater_than_or_equal_to(interpreter::Object* left, interpreter::Object* right) {
     BINARY_LOGIC_OPERATION(Integer, >=, left, right);
     BINARY_LOGIC_OPERATION(Bool, >=, left, right);
     INVALID_BINARY_OPERATION(left, right, ">=")
 }
 
-Object* less_than(Object* left, Object* right) {
+interpreter::Object* less_than(interpreter::Object* left, interpreter::Object* right) {
     BINARY_LOGIC_OPERATION(Integer, <, left, right);
     BINARY_LOGIC_OPERATION(Bool, <, left, right);
     INVALID_BINARY_OPERATION(left, right, "<")
 }
 
-Object* less_than_or_equal_to(Object* left, Object* right) {
+interpreter::Object* less_than_or_equal_to(interpreter::Object* left, interpreter::Object* right) {
     BINARY_LOGIC_OPERATION(Integer, <=, left, right);
     BINARY_LOGIC_OPERATION(Bool, <=, left, right);
     INVALID_BINARY_OPERATION(left, right, "<=")
 }
 
 
-Object* BinaryExpression::execute(interpreter::Interpreter &interpreter) {
+interpreter::Object* BinaryExpression::execute(interpreter::Interpreter &interpreter) {
     auto l = left->execute(interpreter);
     auto r = right->execute(interpreter);
 

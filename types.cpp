@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <iostream>
 
-namespace mango {
+namespace mango::interpreter {
 
 std::ostream &operator<<(std::ostream &os, Object &o) {
     os << o.to_string();

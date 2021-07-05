@@ -9,6 +9,12 @@
 
 namespace mango {
 
+struct Statement;
+
+}
+
+namespace mango::interpreter {
+
 struct Object {
     std::unordered_map<std::string, Object*> properties;
 
@@ -33,8 +39,6 @@ struct Undefined : public Object {
     virtual DataType type() override { return DataType::Undefined; }
     std::string to_string() override { return "undefined"; }
 };
-
-struct Statement;
 
 struct Function : public Object {
     std::vector<std::string> parameters;
