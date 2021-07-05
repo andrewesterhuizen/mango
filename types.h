@@ -5,23 +5,9 @@
 #include <vector>
 #include <iostream>
 
+#include "data_type.h"
+
 namespace mango {
-
-enum class DataType {
-    Undefined,
-    Integer,
-//    Float,
-    String,
-    Bool,
-    Function,
-    Object,
-    Array
-};
-
-
-std::string data_type_to_string(const DataType dt);
-
-std::ostream &operator<<(std::ostream &os, const DataType &dt);
 
 struct Object {
     std::unordered_map<std::string, Object*> properties;
