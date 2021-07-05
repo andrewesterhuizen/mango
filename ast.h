@@ -7,7 +7,7 @@
 
 #include "types.h"
 #include "string_builder.h"
-#include "interpreter/interpreter.h"
+#include "interpreter.h"
 
 namespace mango {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../types.h"
+#include "types.h"
 #include "call_stack.h"
 
 namespace mango {

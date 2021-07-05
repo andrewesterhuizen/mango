@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../types.h"
+#include "types.h"
 
 namespace mango {
 

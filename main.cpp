@@ -4,7 +4,7 @@
 #include "ast.h"
 #include "lexer.h"
 #include "parser.h"
-#include "interpreter/interpreter.h"
+#include "interpreter.h"
 
 mango::Program compile(std::string src) {
     mango::Lexer lexer;
