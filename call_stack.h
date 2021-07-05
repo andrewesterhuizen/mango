@@ -6,7 +6,7 @@
 
 #include "types.h"
 
-namespace mango {
+namespace mango::interpreter {
 
 struct Frame {
     std::unordered_map<std::string, Object*> variables;
@@ -14,12 +14,12 @@ struct Frame {
     Frame(std::string fn) : function_name(fn) {}
 };
 
-class CallStack {
+class FrameStack {
     std::vector<Frame> frames;
     int current = 0;
 
 public:
-    CallStack();
+    FrameStack();
     void new_frame(std::string function_name);
     void pop_frame();
     Object* set_variable(std::string id, Object* v);

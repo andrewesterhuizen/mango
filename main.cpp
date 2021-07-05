@@ -18,7 +18,7 @@ class Repl {
 public:
     int start() {
         std::string line;
-        mango::Interpreter interpreter;
+        mango::interpreter::Interpreter interpreter;
 
         while (1) {
             std::cout << ">";

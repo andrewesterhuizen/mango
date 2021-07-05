@@ -112,7 +112,7 @@ Object* less_than_or_equal_to(Object* left, Object* right) {
 }
 
 
-Object* BinaryExpression::execute(Interpreter &interpreter) {
+Object* BinaryExpression::execute(interpreter::Interpreter &interpreter) {
     auto l = left->execute(interpreter);
     auto r = right->execute(interpreter);
 

@@ -3,10 +3,10 @@
 #include "types.h"
 #include "call_stack.h"
 
-namespace mango {
+namespace mango::interpreter {
 
 class Interpreter {
-    CallStack call_stack;
+    FrameStack frame_stack;
 
 public:
     Object* lookup_variable(std::string id);
