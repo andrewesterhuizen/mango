@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 
-#include "data_type.h"
+#include "../data_type.h"
 
 namespace mango {
 

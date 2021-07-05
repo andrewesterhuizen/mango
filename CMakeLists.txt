@@ -9,8 +9,8 @@ add_executable(mango
         token.cpp
         parser.cpp
         ast.cpp
-        interpreter.cpp
+        data_type.cpp
         string_builder.cpp
-        types.cpp
-        call_stack.cpp
-        data_type.cpp)
+        interpreter/interpreter.cpp
+        interpreter/types.cpp
+        interpreter/call_stack.cpp)

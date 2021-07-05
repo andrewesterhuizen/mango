@@ -6,9 +6,9 @@
 #include <unordered_map>
 
 #include "data_type.h"
-#include "types.h"
+#include "interpreter/types.h"
 #include "string_builder.h"
-#include "interpreter.h"
+#include "interpreter/interpreter.h"
 
 namespace mango {
 
