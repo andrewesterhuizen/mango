@@ -30,60 +30,19 @@ std::ostream &operator<<(std::ostream &os, const Operator &op);
 
 std::string operator_to_string(Operator op);
 
-enum class StatementType {
-    Block,
-    Declaration,
-    Return,
-    If,
-    While,
-    Expression
-};
-
 struct Statement {
-    StatementType m_type;
-    Statement() = delete;
-    Statement(StatementType type) {
-        m_type = type;
-    };
     virtual ~Statement() = default;
-    StatementType type() {
-        return m_type;
-    }
     virtual void print(string_builder::StringBuilder* sb) = 0;
     virtual interpreter::Object* execute(interpreter::Interpreter &interpreter) = 0;
 };
 
-enum class ExpressionType {
-    Undefined,
-    Identifier,
-    IntegerLiteral,
-    StringLiteral,
-    Function,
-    Object,
-    Array,
-    Member,
-    FunctionCall,
-    Binary,
-    Assignment,
-};
-
 struct Expression {
-    ExpressionType m_type;
-    Expression() = delete;
-    Expression(ExpressionType type) {
-        m_type = type;
-    }
     virtual ~Expression() = default;
-    ExpressionType type() {
-        return m_type;
-    }
     virtual void print(string_builder::StringBuilder* sb) = 0;
     virtual interpreter::Object* execute(interpreter::Interpreter &interpreter) = 0;
 };
 
 struct UndefinedExpression : public Expression {
-    UndefinedExpression() : Expression(ExpressionType::Undefined) {};
-
     void print(string_builder::StringBuilder* sb) override {
         sb->append_line_no_indent("UndefinedExpression {}");
     }
@@ -94,7 +53,6 @@ struct UndefinedExpression : public Expression {
 };
 
 struct IdentifierExpression : public Expression {
-    IdentifierExpression() : Expression(ExpressionType::Identifier) {};
     std::string value;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -109,7 +67,6 @@ struct IdentifierExpression : public Expression {
 };
 
 struct IntegerLiteralExpression : public Expression {
-    IntegerLiteralExpression() : Expression(ExpressionType::IntegerLiteral) {};
     int value;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -124,7 +81,6 @@ struct IntegerLiteralExpression : public Expression {
 };
 
 struct StringLiteralExpression : public Expression {
-    StringLiteralExpression() : Expression(ExpressionType::StringLiteral) {};
     std::string value;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -139,7 +95,6 @@ struct StringLiteralExpression : public Expression {
 };
 
 struct FunctionExpression : public Expression {
-    FunctionExpression() : Expression(ExpressionType::Function) {};
     DataType return_type;
     std::vector<std::string> parameters;
     Statement* body;
@@ -171,7 +126,6 @@ struct FunctionExpression : public Expression {
 };
 
 struct ObjectExpression : public Expression {
-    ObjectExpression() : Expression(ExpressionType::Object) {};
     std::unordered_map<std::string, Expression*> properties;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -191,7 +145,6 @@ struct ObjectExpression : public Expression {
 };
 
 struct ArrayExpression : public Expression {
-    ArrayExpression() : Expression(ExpressionType::Array) {};
     std::vector<Expression*> elements;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -222,7 +175,6 @@ struct ArrayExpression : public Expression {
 };
 
 struct MemberExpression : public Expression {
-    MemberExpression() : Expression(ExpressionType::Member) {};
     std::string identifier;
     Expression* property;
 
@@ -285,7 +237,6 @@ struct MemberExpression : public Expression {
 };
 
 struct FunctionCallExpression : public Expression {
-    FunctionCallExpression() : Expression(ExpressionType::FunctionCall) {};
     std::string value;
     std::vector<Expression*> arguments;
 
@@ -347,7 +298,6 @@ struct FunctionCallExpression : public Expression {
 };
 
 struct BinaryExpression : public Expression {
-    BinaryExpression() : Expression(ExpressionType::Binary) {};
     Operator op;
     Expression* left;
     Expression* right;
@@ -371,7 +321,6 @@ struct BinaryExpression : public Expression {
 };
 
 struct AssignmentExpression : public Expression {
-    AssignmentExpression() : Expression(ExpressionType::Assignment) {};
     Expression* left;
     Expression* right;
 
@@ -415,7 +364,6 @@ struct AssignmentExpression : public Expression {
 };
 
 struct BlockStatement : public Statement {
-    BlockStatement() : Statement(StatementType::Block) {};
     std::vector<Statement*> statements;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -448,7 +396,6 @@ struct BlockStatement : public Statement {
 };
 
 struct DeclarationStatement : public Statement {
-    DeclarationStatement() : Statement(StatementType::Declaration) {};
     DataType data_type;
     std::string identifier;
     Expression* value;
@@ -473,7 +420,6 @@ struct DeclarationStatement : public Statement {
 };
 
 struct ReturnStatement : public Statement {
-    ReturnStatement() : Statement(StatementType::Return) {};
     Expression* value;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -492,7 +438,6 @@ struct ReturnStatement : public Statement {
 };
 
 struct IfStatement : public Statement {
-    IfStatement() : Statement(StatementType::If) {};
     Expression* condition;
     Statement* if_block;
     Statement* else_block;
@@ -526,7 +471,6 @@ struct IfStatement : public Statement {
 };
 
 struct WhileStatement : public Statement {
-    WhileStatement() : Statement(StatementType::While) {};
     Expression* condition;
     Statement* body;
 
@@ -553,7 +497,6 @@ struct WhileStatement : public Statement {
 };
 
 struct ExpressionStatement : public Statement {
-    ExpressionStatement() : Statement(StatementType::Expression) {};
     Expression* value;
 
     void print(string_builder::StringBuilder* sb) override {
@@ -596,7 +539,7 @@ public:
         return sb.get_string();
     }
 
-    interpreter::Object* execute(interpreter::Interpreter& interpreter) {
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) {
         interpreter::Object* v;
 
         for (auto s : statements) {
