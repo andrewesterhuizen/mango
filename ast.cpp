@@ -346,7 +346,7 @@ void BlockStatement::print(string_builder::StringBuilder* sb) {
 }
 
 interpreter::Object* BlockStatement::execute(interpreter::Interpreter &interpreter) {
-    interpreter::Object* v;
+    interpreter::Object* v = new interpreter::Undefined();
 
     for (auto s: statements) {
         v = s->execute(interpreter);
@@ -570,7 +570,7 @@ std::string Program::print() {
 }
 
 interpreter::Object* Program::execute(interpreter::Interpreter &interpreter) {
-    interpreter::Object* v;
+    interpreter::Object* v = new interpreter::Undefined();
 
     for (auto s : statements) {
         v = s->execute(interpreter);
