@@ -38,9 +38,13 @@ class Lexer {
             {'\n', TokenType::NewLine}
     };
 
+    int line = 1;
+    int column = 1;
+
     bool is_keyword(std::string text);
     char current_char();
     char next_char();
+    void add_token(TokenType type, std::string value);
     std::string get_identifier();
     std::string get_string();
     std::string get_number();

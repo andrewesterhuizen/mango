@@ -19,10 +19,15 @@ char Lexer::current_char() {
 
 char Lexer::next_char() {
     index++;
+    column++;
     if (index >= source.size()) {
         return '\0';
     }
     return source.at(index);
+}
+
+void Lexer::add_token(TokenType type, std::string value) {
+    tokens.push_back(Token{type, value, "test_file", line, column});
 }
 
 std::string Lexer::get_string() {
@@ -76,22 +81,27 @@ std::vector<Token> Lexer::get_tokens(std::string src) {
     auto c = current_char();
 
     while (c) {
+        if (c == '\n') {
+            line++;
+            column = 1;
+        }
+
         if (isalpha(c)) {
             auto text = get_identifier();
             auto type = is_keyword(text) ? TokenType::Keyword : TokenType::Identifier;
-            tokens.push_back(Token{type, text});
+            add_token(type, text);
         } else if (isnumber(c)) {
             auto n = get_number();
-            tokens.push_back(Token{TokenType::Number, n});
+            add_token(TokenType::Number, n);
         } else if (c == '"') {
             next_char();
             auto s = get_string();
-            tokens.push_back(Token{TokenType::String, s});
+            add_token(TokenType::String, s);
         } else {
             if (c == ' ') {
                 // skip
             } else if (auto entry = single_char_tokens.find(c); entry != single_char_tokens.end()) {
-                tokens.push_back(Token{entry->second, std::string{c}});
+                add_token(entry->second, std::string{c});
             } else {
                 std::cerr << "unexpected token " << c << "\n";
                 assert(false);
@@ -101,7 +111,7 @@ std::vector<Token> Lexer::get_tokens(std::string src) {
         c = next_char();
     }
 
-    tokens.push_back(Token{TokenType::EndOfFile, ""});
+    add_token(TokenType::EndOfFile, "");
 
     return tokens;
 }

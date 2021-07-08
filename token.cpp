@@ -66,7 +66,18 @@ std::ostream &operator<<(std::ostream &os, const TokenType &t) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &t) {
-    os << "{ " << "Type: " << token_type_to_string(t.type) << ", Value: \"" << t.value << "\" }";
+    std::string value = t.value;
+    if (t.type == TokenType::NewLine) {
+        value = "\\n";
+    }
+
+    os << "{ "
+       << "Type: " << token_type_to_string(t.type) << ", "
+       << "Value: " << "\"" << value << "\"" << ", "
+       << "File: " << "\"" << t.file << "\"" << ", "
+       << "Line: " << t.line << ", "
+       << "Column: " << t.column << " "
+       << "}";
     return os;
 }
 

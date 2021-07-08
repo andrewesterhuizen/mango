@@ -37,6 +37,9 @@ std::ostream &operator<<(std::ostream &os, const TokenType &t);
 struct Token {
     TokenType type;
     std::string value;
+    std::string file;
+    int line;
+    int column;
 };
 
 std::ostream &operator<<(std::ostream &os, const Token &t);

@@ -451,6 +451,7 @@ Statement* Parser::get_statement() {
             backup();
             return get_block_statement();
         }
+        case TokenType::NewLine:
         default:
         UNEXPECTED_TOKEN(t);
     }
@@ -461,7 +462,9 @@ std::vector<Statement*> Parser::get_statements() {
 
     auto next_token = peek_next_token();
 
-    while (next_token.type != TokenType::EndOfFile && next_token.type != TokenType::RightBrace) {
+    while (next_token.type != TokenType::EndOfFile &&
+           next_token.type != TokenType::NewLine &&
+           next_token.type != TokenType::RightBrace) {
         statements.push_back(get_statement());
         next_token = peek_next_token();
     }
