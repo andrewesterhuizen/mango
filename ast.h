@@ -23,7 +23,9 @@ enum class Operator {
     GreaterThanOrEqualTo,
     EqualTo,
     NotEqualTo,
-    Not
+    Not,
+    And,
+    Or,
 };
 
 std::ostream &operator<<(std::ostream &os, const Operator &op);
@@ -61,6 +63,12 @@ struct IntegerLiteralExpression : public Expression {
 
 struct StringLiteralExpression : public Expression {
     std::string value;
+    void print(string_builder::StringBuilder* sb) override;
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override;
+};
+
+struct BooleanLiteralExpression : public Expression {
+    bool value;
     void print(string_builder::StringBuilder* sb) override;
     interpreter::Object* execute(interpreter::Interpreter &interpreter) override;
 };
@@ -103,6 +111,13 @@ struct BinaryExpression : public Expression {
     Operator op;
     Expression* left;
     Expression* right;
+    void print(string_builder::StringBuilder* sb) override;
+    interpreter::Object* execute(interpreter::Interpreter &interpreter) override;
+};
+
+struct UnaryExpression : public Expression {
+    Operator op;
+    Expression* argument;
     void print(string_builder::StringBuilder* sb) override;
     interpreter::Object* execute(interpreter::Interpreter &interpreter) override;
 };

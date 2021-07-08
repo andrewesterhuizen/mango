@@ -98,7 +98,7 @@ std::vector<Token> Lexer::get_tokens(std::string src) {
             auto s = get_string();
             add_token(TokenType::String, s);
         } else {
-            if (c == ' ') {
+            if (c == ' ' || c == '\n') {
                 // skip
             } else if (auto entry = single_char_tokens.find(c); entry != single_char_tokens.end()) {
                 add_token(entry->second, std::string{c});

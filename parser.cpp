@@ -77,6 +77,26 @@ Operator Parser::get_operator() {
             }
 
             return Operator::Not;
+        case TokenType::Ampersand: {
+            if (next.type == TokenType::Ampersand) {
+                next_token();
+                return Operator::And;
+            }
+
+            // TODO: handle bitwise & operator
+
+            assert(false);
+        }
+        case TokenType::Pipe: {
+            if (next.type == TokenType::Pipe) {
+                next_token();
+                return Operator::Or;
+            }
+
+            // TODO: handle bitwise | operator
+
+            assert(false);
+        }
         case TokenType::LeftAngleBracket:
             if (next.type == TokenType::Equals) {
                 next_token();
@@ -202,6 +222,13 @@ Statement* Parser::get_block_statement() {
     return s;
 }
 
+Statement* Parser::get_expression_statement() {
+    auto s = new ExpressionStatement();
+    s->value = get_expression();
+    expect_optional(TokenType::SemiColon);
+    return s;
+}
+
 Expression* Parser::get_function_expression() {
     auto keyword_token = expect(TokenType::Keyword);
     assert(keyword_token.value == "func");
@@ -323,6 +350,11 @@ Expression* Parser::get_expression() {
     Expression* left;
 
     switch (t.type) {
+        case TokenType::LeftParen: {
+            left = get_expression();
+            expect(TokenType::RightParen);
+            break;
+        }
         case TokenType::Identifier: {
             if (peek_next_token().type == TokenType::LeftParen) {
                 backup();
@@ -362,8 +394,19 @@ Expression* Parser::get_expression() {
 
         case TokenType::Keyword: {
             backup();
-            return get_function_expression();
+
+            if (t.value == "true" || t.value == "false") {
+                auto ble = new BooleanLiteralExpression();
+                ble->value = t.value == "true";
+                left = ble;
+                next_token();
+            } else {
+                return get_function_expression();
+            }
+
+            break;
         }
+
         case TokenType::LeftBrace: {
             backup();
             return get_object_expression();
@@ -383,6 +426,12 @@ Expression* Parser::get_expression() {
             sle->value = t.value;
             left = sle;
             break;
+        }
+        case TokenType::Exclamation: {
+            auto ue = new UnaryExpression();
+            ue->op = Operator::Not;
+            ue->argument = get_expression();
+            return ue;
         }
         default:
         UNEXPECTED_TOKEN(t);
@@ -435,12 +484,19 @@ Statement* Parser::get_statement() {
                 return get_while_statement();
             }
 
+            if (t.value == "true" || t.value == "false") {
+                backup();
+                return get_expression_statement();
+            }
+
             UNEXPECTED_TOKEN(t);
         }
 
         case TokenType::Identifier:
         case TokenType::Number:
-        case TokenType::String: {
+        case TokenType::String:
+        case TokenType::LeftParen:
+        case TokenType::Exclamation: {
             backup();
             auto s = new ExpressionStatement();
             s->value = get_expression();
@@ -451,7 +507,6 @@ Statement* Parser::get_statement() {
             backup();
             return get_block_statement();
         }
-        case TokenType::NewLine:
         default:
         UNEXPECTED_TOKEN(t);
     }
@@ -460,13 +515,15 @@ Statement* Parser::get_statement() {
 std::vector<Statement*> Parser::get_statements() {
     std::vector<Statement*> statements;
 
-    auto next_token = peek_next_token();
+    auto next = peek_next_token();
 
-    while (next_token.type != TokenType::EndOfFile &&
-           next_token.type != TokenType::NewLine &&
-           next_token.type != TokenType::RightBrace) {
+    while (next.type != TokenType::EndOfFile && next.type != TokenType::RightBrace) {
         statements.push_back(get_statement());
-        next_token = peek_next_token();
+        next = peek_next_token();
+        if(next.type == TokenType::NewLine) {
+            next_token();
+            next = peek_next_token();
+        }
     }
 
     return statements;

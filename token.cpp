@@ -26,6 +26,10 @@ std::string token_type_to_string(TokenType t) {
             return "Comma";
         case TokenType::Exclamation:
             return "Exclamation";
+        case TokenType::Ampersand:
+            return "Ampersand";
+        case TokenType::Pipe:
+            return "Pipe";
         case TokenType::LeftParen:
             return "LeftParen";
         case TokenType::RightParen:

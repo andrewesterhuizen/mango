@@ -16,6 +16,8 @@ auto operator_string_lookup = std::unordered_map<Operator, std::string>{
         {Operator::LessThanOrEqualTo,    "<="},
         {Operator::GreaterThan,          ">"},
         {Operator::GreaterThanOrEqualTo, ">="},
+        {Operator::And,                  "&&"},
+        {Operator::Or,                   "||"},
 };
 
 std::string operator_to_string(Operator op) {
@@ -111,6 +113,17 @@ interpreter::Object* less_than_or_equal_to(interpreter::Object* left, interprete
     INVALID_BINARY_OPERATION(left, right, "<=")
 }
 
+interpreter::Object* logical_and(interpreter::Object* left, interpreter::Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, &&, left, right);
+    BINARY_LOGIC_OPERATION(Bool, &&, left, right);
+    INVALID_BINARY_OPERATION(left, right, "&&")
+}
+
+interpreter::Object* logical_or(interpreter::Object* left, interpreter::Object* right) {
+    BINARY_LOGIC_OPERATION(Integer, ||, left, right);
+    BINARY_LOGIC_OPERATION(Bool, ||, left, right);
+    INVALID_BINARY_OPERATION(left, right, "||")
+}
 
 interpreter::Object* BinaryExpression::execute(interpreter::Interpreter &interpreter) {
     auto l = left->execute(interpreter);
@@ -147,6 +160,10 @@ interpreter::Object* BinaryExpression::execute(interpreter::Interpreter &interpr
             return less_than(l, r);
         case Operator::LessThanOrEqualTo:
             return less_than_or_equal_to(l, r);
+        case Operator::And:
+            return logical_and(l, r);
+        case Operator::Or:
+            return logical_or(l, r);
         case Operator::Not:
             std::cerr << "operator \"!\" is not a binary operator\n";
             assert(false);
@@ -165,6 +182,47 @@ void BinaryExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line("");
     sb->append("right: ");
     right->print(sb);
+    sb->append_line("");
+    sb->decrease_indent();
+    sb->append("}");
+}
+
+
+interpreter::Object* UnaryExpression::execute(interpreter::Interpreter &interpreter) {
+    auto arg = argument->execute(interpreter);
+
+    switch (op) {
+        case Operator::Not: {
+            assert(arg->type() == DataType::Bool);
+            auto bool_arg = static_cast<interpreter::Bool*>(arg);
+            return new interpreter::Bool(!bool_arg->value);
+        }
+        case Operator::Plus:
+        case Operator::Minus:
+        case Operator::Multiply:
+        case Operator::Divide:
+        case Operator::EqualTo:
+        case Operator::NotEqualTo:
+        case Operator::GreaterThan:
+        case Operator::GreaterThanOrEqualTo:
+        case Operator::LessThan:
+        case Operator::LessThanOrEqualTo:
+        case Operator::And:
+        case Operator::Or:
+            std::cerr << "invalid operator " << op;
+            assert(false);
+    }
+
+    std::cerr << "unhandled operator " << op << "\n";
+    assert(false);
+}
+void UnaryExpression::print(string_builder::StringBuilder* sb) {
+    sb->append_line_no_indent("UnaryExpression {");
+    sb->increase_indent();
+    sb->append("operator: ");
+    sb->append_line_no_indent(operator_to_string(op));
+    sb->append("argument: ");
+    argument->print(sb);
     sb->append_line("");
     sb->decrease_indent();
     sb->append("}");
@@ -206,6 +264,17 @@ void StringLiteralExpression::print(string_builder::StringBuilder* sb) {
 
 interpreter::Object* StringLiteralExpression::execute(interpreter::Interpreter &interpreter) {
     return new interpreter::String(value);
+}
+
+
+void BooleanLiteralExpression::print(string_builder::StringBuilder* sb) {
+    sb->append_no_indent("BooleanLiteralExpression { value: ");
+    sb->append_no_indent(value ? "true" : "false");
+    sb->append_no_indent(" }");
+}
+
+interpreter::Object* BooleanLiteralExpression::execute(interpreter::Interpreter &interpreter) {
+    return new interpreter::Bool(value);
 }
 
 void FunctionExpression::print(string_builder::StringBuilder* sb) {

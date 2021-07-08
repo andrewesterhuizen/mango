@@ -16,6 +16,8 @@ enum class TokenType {
     SemiColon,
     Comma,
     Exclamation,
+    Ampersand,
+    Pipe,
     Plus,
     Minus,
     Asterisk,

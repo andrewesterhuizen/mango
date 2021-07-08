@@ -31,6 +31,7 @@ class Parser {
     Statement* get_return_statement();
     Statement* get_if_statement();
     Statement* get_while_statement();
+    Statement* get_expression_statement();
     Expression* get_assignment_expression();
     Expression* get_member_expression();
     Expression* get_object_expression();

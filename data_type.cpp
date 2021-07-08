@@ -8,6 +8,7 @@ auto data_type_string_lookup = std::unordered_map<DataType, std::string>{
         {DataType::String,    "string"},
         {DataType::Integer,   "integer"},
         {DataType::Function,  "function"},
+        {DataType::Bool,      "bool"},
 };
 
 std::string data_type_to_string(const DataType dt) {
