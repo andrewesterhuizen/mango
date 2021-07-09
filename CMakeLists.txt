@@ -10,7 +10,4 @@ add_executable(mango
         parser.cpp
         ast.cpp
         data_type.cpp
-        string_builder.cpp
-        interpreter/interpreter.cpp
-        interpreter/types.cpp
-        interpreter/call_stack.cpp)
+        string_builder.cpp)

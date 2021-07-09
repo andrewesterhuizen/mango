@@ -34,144 +34,6 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     return os;
 }
 
-
-#define INVALID_BINARY_OPERATION(LEFT, RIGHT, OPERATOR) \
-     std::cerr << "operator " << OPERATOR << " cannot be applied to types " \
-     << LEFT->type() << " and " << RIGHT->type() << "\n"; \
-     assert(false);
-
-#define BINARY_MATHS_OPERATION(TYPE, OPERATOR, LEFT, RIGHT) \
-    if (LEFT->type() == DataType::TYPE) { \
-        auto l = static_cast<interpreter::TYPE*>(LEFT); \
-        auto r = static_cast<interpreter::TYPE*>(RIGHT); \
-        return new interpreter::TYPE(l->value OPERATOR r->value); \
-    }
-
-#define BINARY_LOGIC_OPERATION(TYPE, OPERATOR, LEFT, RIGHT) \
-    if (LEFT->type() == DataType::TYPE) { \
-        auto l = static_cast<interpreter::TYPE*>(LEFT); \
-        auto r = static_cast<interpreter::TYPE*>(RIGHT); \
-        return new interpreter::Bool(l->value OPERATOR r->value); \
-    }
-
-interpreter::Object* add(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_MATHS_OPERATION(Integer, +, left, right);
-    BINARY_MATHS_OPERATION(String, +, left, right);
-    INVALID_BINARY_OPERATION(left, right, "+")
-}
-
-interpreter::Object* subract(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_MATHS_OPERATION(Integer, -, left, right);
-    INVALID_BINARY_OPERATION(left, right, "-")
-}
-
-interpreter::Object* multiply(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_MATHS_OPERATION(Integer, *, left, right);
-    INVALID_BINARY_OPERATION(left, right, "*")
-}
-
-interpreter::Object* divide(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_MATHS_OPERATION(Integer, /, left, right);
-    INVALID_BINARY_OPERATION(left, right, "/")
-}
-
-interpreter::Object* equal_to(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, ==, left, right);
-    BINARY_LOGIC_OPERATION(String, ==, left, right);
-    BINARY_LOGIC_OPERATION(Bool, ==, left, right);
-    INVALID_BINARY_OPERATION(left, right, "==")
-}
-
-interpreter::Object* not_equal_to(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, !=, left, right);
-    BINARY_LOGIC_OPERATION(String, !=, left, right);
-    BINARY_LOGIC_OPERATION(Bool, !=, left, right);
-    INVALID_BINARY_OPERATION(left, right, "!=")
-}
-
-interpreter::Object* greater_than(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, >, left, right);
-    BINARY_LOGIC_OPERATION(Bool, >, left, right);
-    INVALID_BINARY_OPERATION(left, right, ">")
-}
-
-interpreter::Object* greater_than_or_equal_to(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, >=, left, right);
-    BINARY_LOGIC_OPERATION(Bool, >=, left, right);
-    INVALID_BINARY_OPERATION(left, right, ">=")
-}
-
-interpreter::Object* less_than(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, <, left, right);
-    BINARY_LOGIC_OPERATION(Bool, <, left, right);
-    INVALID_BINARY_OPERATION(left, right, "<")
-}
-
-interpreter::Object* less_than_or_equal_to(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, <=, left, right);
-    BINARY_LOGIC_OPERATION(Bool, <=, left, right);
-    INVALID_BINARY_OPERATION(left, right, "<=")
-}
-
-interpreter::Object* logical_and(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, &&, left, right);
-    BINARY_LOGIC_OPERATION(Bool, &&, left, right);
-    INVALID_BINARY_OPERATION(left, right, "&&")
-}
-
-interpreter::Object* logical_or(interpreter::Object* left, interpreter::Object* right) {
-    BINARY_LOGIC_OPERATION(Integer, ||, left, right);
-    BINARY_LOGIC_OPERATION(Bool, ||, left, right);
-    INVALID_BINARY_OPERATION(left, right, "||")
-}
-
-interpreter::Object* BinaryExpression::execute(interpreter::Interpreter &interpreter) {
-    auto l = left->execute(interpreter);
-    auto r = right->execute(interpreter);
-
-    // TODO: operator precedence
-
-    // this is a simple solution for now but we can probably allow some
-    // automatic type converting for operations on values of different types
-    if (l->type() != r->type()) {
-        std::cerr << "operator " << op << " cannot be applied to types " << l->type() << " and " << r->type()
-                  << "\n";
-        assert(false);
-    }
-
-    switch (op) {
-        case Operator::Plus:
-            return add(l, r);
-        case Operator::Minus:
-            return subract(l, r);
-        case Operator::Multiply:
-            return multiply(l, r);
-        case Operator::Divide:
-            return divide(l, r);
-        case Operator::EqualTo:
-            return equal_to(l, r);
-        case Operator::NotEqualTo:
-            return not_equal_to(l, r);
-        case Operator::GreaterThan:
-            return greater_than(l, r);
-        case Operator::GreaterThanOrEqualTo:
-            return greater_than_or_equal_to(l, r);
-        case Operator::LessThan:
-            return less_than(l, r);
-        case Operator::LessThanOrEqualTo:
-            return less_than_or_equal_to(l, r);
-        case Operator::And:
-            return logical_and(l, r);
-        case Operator::Or:
-            return logical_or(l, r);
-        case Operator::Not:
-            std::cerr << "operator \"!\" is not a binary operator\n";
-            assert(false);
-    }
-
-    std::cerr << "unhandled operator " << op << "\n";
-    assert(false);
-}
 void BinaryExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line_no_indent("BinaryExpression {");
     sb->increase_indent();
@@ -195,34 +57,6 @@ void BinaryExpression::generate(string_builder::StringBuilder* sb) {
     right->generate(sb);
 }
 
-interpreter::Object* UnaryExpression::execute(interpreter::Interpreter &interpreter) {
-    auto arg = argument->execute(interpreter);
-
-    switch (op) {
-        case Operator::Not: {
-            assert(arg->type() == DataType::Bool);
-            auto bool_arg = static_cast<interpreter::Bool*>(arg);
-            return new interpreter::Bool(!bool_arg->value);
-        }
-        case Operator::Plus:
-        case Operator::Minus:
-        case Operator::Multiply:
-        case Operator::Divide:
-        case Operator::EqualTo:
-        case Operator::NotEqualTo:
-        case Operator::GreaterThan:
-        case Operator::GreaterThanOrEqualTo:
-        case Operator::LessThan:
-        case Operator::LessThanOrEqualTo:
-        case Operator::And:
-        case Operator::Or:
-            std::cerr << "invalid operator " << op;
-            assert(false);
-    }
-
-    std::cerr << "unhandled operator " << op << "\n";
-    assert(false);
-}
 void UnaryExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line_no_indent("UnaryExpression {");
     sb->increase_indent();
@@ -239,18 +73,10 @@ void UndefinedExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line_no_indent("UndefinedExpression {}");
 }
 
-interpreter::Object* UndefinedExpression::execute(interpreter::Interpreter &interpreter) {
-    return new interpreter::Undefined();
-}
-
 void IdentifierExpression::print(string_builder::StringBuilder* sb) {
     sb->append_no_indent("IdentifierExpression { value: ");
     sb->append_no_indent(value);
     sb->append_no_indent(" }");
-}
-
-interpreter::Object* IdentifierExpression::execute(interpreter::Interpreter &interpreter) {
-    return interpreter.lookup_variable(value);
 }
 
 void IdentifierExpression::generate(string_builder::StringBuilder* sb) {
@@ -263,10 +89,6 @@ void IntegerLiteralExpression::print(string_builder::StringBuilder* sb) {
     sb->append_no_indent(" }");
 }
 
-interpreter::Object* IntegerLiteralExpression::execute(interpreter::Interpreter &interpreter) {
-    return new interpreter::Integer(value);
-}
-
 void IntegerLiteralExpression::generate(string_builder::StringBuilder* sb) {
     sb->append_no_indent(std::to_string(value));
 }
@@ -275,10 +97,6 @@ void StringLiteralExpression::print(string_builder::StringBuilder* sb) {
     sb->append_no_indent("StringLiteralExpression { value: ");
     sb->append_no_indent(value);
     sb->append_no_indent(" }");
-}
-
-interpreter::Object* StringLiteralExpression::execute(interpreter::Interpreter &interpreter) {
-    return new interpreter::String(value);
 }
 
 void StringLiteralExpression::generate(string_builder::StringBuilder* sb) {
@@ -290,10 +108,6 @@ void BooleanLiteralExpression::print(string_builder::StringBuilder* sb) {
     sb->append_no_indent("BooleanLiteralExpression { value: ");
     sb->append_no_indent(value ? "true" : "false");
     sb->append_no_indent(" }");
-}
-
-interpreter::Object* BooleanLiteralExpression::execute(interpreter::Interpreter &interpreter) {
-    return new interpreter::Bool(value);
 }
 
 void BooleanLiteralExpression::generate(string_builder::StringBuilder* sb) {
@@ -318,13 +132,6 @@ void FunctionExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line("}");
 }
 
-interpreter::Object* FunctionExpression::execute(interpreter::Interpreter &interpreter) {
-    auto obj = new interpreter::Function();
-    obj->parameters = parameters;
-    obj->body = body;
-    return obj;
-}
-
 void ExpressionStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("ExpressionStatement {");
     sb->increase_indent();
@@ -333,10 +140,6 @@ void ExpressionStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("");
     sb->decrease_indent();
     sb->append_line("}");
-}
-
-interpreter::Object* ExpressionStatement::execute(interpreter::Interpreter &interpreter) {
-    return value->execute(interpreter);
 }
 
 void ExpressionStatement::generate(string_builder::StringBuilder* sb) {
@@ -359,14 +162,6 @@ void WhileStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("}");
 }
 
-interpreter::Object* WhileStatement::execute(interpreter::Interpreter &interpreter) {
-    while (condition->execute(interpreter)->is_truthy()) {
-        body->execute(interpreter);
-    }
-
-    return new interpreter::Undefined();
-}
-
 void IfStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("IfStatement {");
     sb->increase_indent();
@@ -385,17 +180,6 @@ void IfStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("");
     sb->decrease_indent();
     sb->append_line("}");
-}
-
-interpreter::Object* IfStatement::execute(interpreter::Interpreter &interpreter) {
-    auto condition_value = condition->execute(interpreter);
-    if (condition_value->is_truthy()) {
-        if_block->execute(interpreter);
-    } else if (else_block != nullptr) {
-        else_block->execute(interpreter);
-    }
-
-    return new interpreter::Undefined();
 }
 
 void IfStatement::generate(string_builder::StringBuilder* sb) {
@@ -419,10 +203,6 @@ void ReturnStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("}");
 }
 
-interpreter::Object* ReturnStatement::execute(interpreter::Interpreter &interpreter) {
-    return value->execute(interpreter);
-}
-
 void DeclarationStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("DeclarationStatement {");
     sb->increase_indent();
@@ -435,10 +215,6 @@ void DeclarationStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line_no_indent("");
     sb->decrease_indent();
     sb->append_line("}");
-}
-
-interpreter::Object* DeclarationStatement::execute(interpreter::Interpreter &interpreter) {
-    return interpreter.set_variable(identifier, value->execute(interpreter));
 }
 
 void DeclarationStatement::generate(string_builder::StringBuilder* sb) {
@@ -469,16 +245,6 @@ void BlockStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("}");
 }
 
-interpreter::Object* BlockStatement::execute(interpreter::Interpreter &interpreter) {
-    interpreter::Object* v = new interpreter::Undefined();
-
-    for (auto s: statements) {
-        v = s->execute(interpreter);
-    }
-
-    return v;
-}
-
 void BlockStatement::generate(string_builder::StringBuilder* sb) {
     sb->append_line("{");
     sb->increase_indent();
@@ -504,30 +270,6 @@ void AssignmentExpression::print(string_builder::StringBuilder* sb) {
     sb->append("}");
 }
 
-interpreter::Object* AssignmentExpression::execute(interpreter::Interpreter &interpreter) {
-    auto right_value = right->execute(interpreter);
-
-    if (auto e = dynamic_cast<IdentifierExpression*>(left)) {
-        interpreter.set_variable(e->value, right_value);
-        return right_value;
-    } else if (auto e = dynamic_cast<MemberExpression*>(left)) {
-        auto variable = interpreter.lookup_variable(e->identifier);
-        if (variable->type() == DataType::Undefined) {
-            std::cerr << "reference error: no definition found for identifier \"" << e->identifier << "\"\n";
-            assert(false);
-        }
-
-        auto name = e->property->execute(interpreter);
-        auto name_string = dynamic_cast<interpreter::String*>(name);
-        assert(name_string != nullptr);
-
-        auto v = variable->properties.find(name_string->value);
-        variable->properties[name_string->value] = right_value;
-        return right_value;
-    }
-
-    assert(false);
-}
 void AssignmentExpression::generate(string_builder::StringBuilder* sb) {
     auto id = dynamic_cast<IdentifierExpression*>(left);
     assert(id != nullptr);
@@ -556,43 +298,6 @@ void FunctionCallExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line("}");
 }
 
-interpreter::Object* FunctionCallExpression::execute(interpreter::Interpreter &interpreter) {
-    auto obj = interpreter.lookup_variable(value);
-    if (obj->type() == DataType::Undefined) {
-        std::cerr << "reference error: no definition found for identifier \"" << value << "\"\n";
-        assert(false);
-    }
-
-    auto function = dynamic_cast<interpreter::Function*>(obj);
-    if (function == nullptr) {
-        std::cerr << "identifier " << value << " is not a function\n";
-        assert(false);
-    }
-
-    if (function->is_builtin) {
-        std::vector<interpreter::Object*> args;
-
-        for (int i = 0; i < arguments.size(); i++) {
-            args.push_back(arguments[i]->execute(interpreter));
-        }
-
-        return function->builtin_fn(args);
-    } else {
-        interpreter.new_frame(value);
-
-        for (int i = 0; i < arguments.size(); i++) {
-            auto identifier = function->parameters[i];
-            interpreter.set_variable(identifier, arguments[i]->execute(interpreter));
-        }
-
-        auto return_value = function->body->execute(interpreter);
-
-        interpreter.pop_frame();
-
-        return return_value;
-    }
-}
-
 void MemberExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line_no_indent("MemberExpression {");
     sb->increase_indent();
@@ -602,52 +307,6 @@ void MemberExpression::print(string_builder::StringBuilder* sb) {
     property->print(sb);
     sb->decrease_indent();
     sb->append_no_indent(" }");
-}
-
-interpreter::Object* MemberExpression::execute(interpreter::Interpreter &interpreter) {
-    auto variable = interpreter.lookup_variable(identifier);
-    if (variable->type() == DataType::Undefined) {
-        std::cerr << "reference error: no definition found for identifier \"" << identifier << "\"\n";
-        assert(false);
-    }
-
-    if (auto array = dynamic_cast<interpreter::Array*>(variable)) {
-        auto property_value = property->execute(interpreter);
-        auto property_integer = dynamic_cast<interpreter::Integer*>(property_value);
-
-        // TODO: handle built in properties like .size for arrays
-        if (property_integer == nullptr) {
-            std::cerr << "unsupported data type for property lookup\n";
-            assert(false);
-        }
-
-        // element lookup
-        auto index = property_integer->value;
-        if (index >= array->elements.size()) {
-            return new interpreter::Undefined();
-        }
-
-        return array->elements.at(index);
-    } else {
-        auto property_value = property->execute(interpreter);
-
-        std::string property_string;
-        if (auto str = dynamic_cast<interpreter::String*>(property)) {
-            property_string = str->value;
-        } else {
-            property_string = property_value->to_string();
-        }
-
-        auto v = variable->properties.find(property_string);
-        if (v == variable->properties.end()) {
-            return new interpreter::Undefined();
-        }
-
-        return v->second;
-    }
-
-    std::cerr << "unsupported data type for property lookup\n";
-    assert(false);
 }
 
 void ArrayExpression::print(string_builder::StringBuilder* sb) {
@@ -666,29 +325,9 @@ void ArrayExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line("}");
 }
 
-interpreter::Object* ArrayExpression::execute(interpreter::Interpreter &interpreter) {
-    auto obj = new interpreter::Array();
-
-    for (auto el : elements) {
-        obj->elements.push_back(el->execute(interpreter));
-    }
-
-    return obj;
-}
-
 void ObjectExpression::print(string_builder::StringBuilder* sb) {
     sb->append_line_no_indent("ObjectExpression {");
     sb->append_line("}");
-}
-
-interpreter::Object* ObjectExpression::execute(interpreter::Interpreter &interpreter) {
-    auto obj = new interpreter::Object();
-
-    for (auto prop : properties) {
-        obj->properties[prop.first] = prop.second->execute(interpreter);
-    }
-
-    return obj;
 }
 
 std::string Program::print() {
@@ -711,16 +350,6 @@ std::string Program::print() {
     sb.append_line("}");
 
     return sb.get_string();
-}
-
-interpreter::Object* Program::execute(interpreter::Interpreter &interpreter) {
-    interpreter::Object* v = new interpreter::Undefined();
-
-    for (auto s : statements) {
-        v = s->execute(interpreter);
-    }
-
-    return v;
 }
 
 std::string Program::generate() {
