@@ -187,6 +187,13 @@ void BinaryExpression::print(string_builder::StringBuilder* sb) {
     sb->append("}");
 }
 
+void BinaryExpression::generate(string_builder::StringBuilder* sb) {
+    left->generate(sb);
+    sb->append_no_indent(" ");
+    sb->append_no_indent(operator_to_string(op));
+    sb->append_no_indent(" ");
+    right->generate(sb);
+}
 
 interpreter::Object* UnaryExpression::execute(interpreter::Interpreter &interpreter) {
     auto arg = argument->execute(interpreter);
@@ -246,6 +253,10 @@ interpreter::Object* IdentifierExpression::execute(interpreter::Interpreter &int
     return interpreter.lookup_variable(value);
 }
 
+void IdentifierExpression::generate(string_builder::StringBuilder* sb) {
+    sb->append_no_indent(value);
+}
+
 void IntegerLiteralExpression::print(string_builder::StringBuilder* sb) {
     sb->append_no_indent("IntegerLiteralExpression { value: ");
     sb->append_no_indent(std::to_string(value));
@@ -254,6 +265,10 @@ void IntegerLiteralExpression::print(string_builder::StringBuilder* sb) {
 
 interpreter::Object* IntegerLiteralExpression::execute(interpreter::Interpreter &interpreter) {
     return new interpreter::Integer(value);
+}
+
+void IntegerLiteralExpression::generate(string_builder::StringBuilder* sb) {
+    sb->append_no_indent(std::to_string(value));
 }
 
 void StringLiteralExpression::print(string_builder::StringBuilder* sb) {
@@ -266,6 +281,10 @@ interpreter::Object* StringLiteralExpression::execute(interpreter::Interpreter &
     return new interpreter::String(value);
 }
 
+void StringLiteralExpression::generate(string_builder::StringBuilder* sb) {
+    std::cerr << "TODO: strings\n";
+    assert(false);
+}
 
 void BooleanLiteralExpression::print(string_builder::StringBuilder* sb) {
     sb->append_no_indent("BooleanLiteralExpression { value: ");
@@ -275,6 +294,10 @@ void BooleanLiteralExpression::print(string_builder::StringBuilder* sb) {
 
 interpreter::Object* BooleanLiteralExpression::execute(interpreter::Interpreter &interpreter) {
     return new interpreter::Bool(value);
+}
+
+void BooleanLiteralExpression::generate(string_builder::StringBuilder* sb) {
+    sb->append_no_indent(value ? "1" : "0");
 }
 
 void FunctionExpression::print(string_builder::StringBuilder* sb) {
@@ -316,6 +339,13 @@ interpreter::Object* ExpressionStatement::execute(interpreter::Interpreter &inte
     return value->execute(interpreter);
 }
 
+void ExpressionStatement::generate(string_builder::StringBuilder* sb) {
+    sb->append("");
+    value->generate(sb);
+    sb->append_no_indent(";");
+    sb->append_line("");
+}
+
 void WhileStatement::print(string_builder::StringBuilder* sb) {
     sb->append_line("WhileStatement {");
     sb->increase_indent();
@@ -347,7 +377,11 @@ void IfStatement::print(string_builder::StringBuilder* sb) {
     if_block->print(sb);
     sb->append_line("");
     sb->append("else_block: ");
-    else_block->print(sb);
+    if (else_block) {
+        else_block->print(sb);
+    } else {
+        sb->append_no_indent("<null>");
+    }
     sb->append_line("");
     sb->decrease_indent();
     sb->append_line("}");
@@ -362,6 +396,17 @@ interpreter::Object* IfStatement::execute(interpreter::Interpreter &interpreter)
     }
 
     return new interpreter::Undefined();
+}
+
+void IfStatement::generate(string_builder::StringBuilder* sb) {
+    sb->append("if (");
+    condition->generate(sb);
+    sb->append_line_no_indent(")");
+    if_block->generate(sb);
+    if (else_block) {
+        sb->append_line("else");
+        else_block->generate(sb);
+    }
 }
 
 void ReturnStatement::print(string_builder::StringBuilder* sb) {
@@ -396,8 +441,18 @@ interpreter::Object* DeclarationStatement::execute(interpreter::Interpreter &int
     return interpreter.set_variable(identifier, value->execute(interpreter));
 }
 
+void DeclarationStatement::generate(string_builder::StringBuilder* sb) {
+    assert(data_type == DataType::Integer);
+    sb->append("int ");
+    sb->append_no_indent(identifier);
+    sb->append_no_indent(" = ");
+    value->generate(sb);
+    sb->append_no_indent(";");
+    sb->append_line("");
+}
+
 void BlockStatement::print(string_builder::StringBuilder* sb) {
-    sb->append_line("BlockStatement {");
+    sb->append_line_no_indent("BlockStatement {");
     sb->increase_indent();
     sb->append_line("value: [");
     sb->increase_indent();
@@ -422,6 +477,18 @@ interpreter::Object* BlockStatement::execute(interpreter::Interpreter &interpret
     }
 
     return v;
+}
+
+void BlockStatement::generate(string_builder::StringBuilder* sb) {
+    sb->append_line("{");
+    sb->increase_indent();
+
+    for (auto s: statements) {
+        s->generate(sb);
+    }
+
+    sb->decrease_indent();
+    sb->append_line("}");
 }
 
 void AssignmentExpression::print(string_builder::StringBuilder* sb) {
@@ -460,6 +527,14 @@ interpreter::Object* AssignmentExpression::execute(interpreter::Interpreter &int
     }
 
     assert(false);
+}
+void AssignmentExpression::generate(string_builder::StringBuilder* sb) {
+    auto id = dynamic_cast<IdentifierExpression*>(left);
+    assert(id != nullptr);
+
+    sb->append_no_indent(id->value);
+    sb->append_no_indent(" = ");
+    right->generate(sb);
 }
 
 void FunctionCallExpression::print(string_builder::StringBuilder* sb) {
@@ -646,6 +721,24 @@ interpreter::Object* Program::execute(interpreter::Interpreter &interpreter) {
     }
 
     return v;
+}
+
+std::string Program::generate() {
+    string_builder::StringBuilder sb;
+
+    sb.append_line("int main() {");
+    sb.increase_indent();
+
+    for (auto s : statements) {
+        s->generate(&sb);
+    }
+
+    sb.append_line("return 0;");
+
+    sb.decrease_indent();
+    sb.append_line("}");
+
+    return sb.get_string();
 }
 
 }
